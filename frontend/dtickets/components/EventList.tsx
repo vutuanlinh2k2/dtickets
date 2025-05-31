@@ -11,9 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
+import { SUI_DECIMALS } from "@mysten/sui/utils";
 
+// Original Event interface that EventCard expects
 export interface Event {
   id: string;
   name: string;
@@ -26,116 +28,29 @@ export interface Event {
   imageUrl?: string; // Optional event image
 }
 
+// API Event interface from backend
+interface ApiEvent {
+  id: string;
+  name: string;
+  description: string;
+  venue: string;
+  startTime: string;
+  endTime: string;
+  ticketPrice: string;
+  totalTickets: number;
+  ticketsSold: number;
+  imgUrl?: string;
+  organizer: string;
+  createdAt: string;
+  updatedAt: string;
+  tickets: [];
+}
+
 interface EventListProps {
   initialEvents?: Event[];
 }
 
-// Mock initial events data
-const mockEvents: Event[] = [
-  {
-    id: "1",
-    name: "Sui Blockchain Summit",
-    dateTime: Math.floor(Date.now() / 1000) + 86400 * 7,
-    venueName: "Crypto Convention Center",
-    ticketPrice: 25,
-    shortDescription:
-      "Join us for an immersive deep dive into the Sui ecosystem, featuring keynote speakers, hands-on workshops, networking opportunities, and exclusive insights into the future of decentralized applications on the Sui blockchain. This is a must-attend event for developers, investors, and enthusiasts alike who are keen to explore the cutting-edge technology and potential of Sui. We will cover topics ranging from Move programming to DeFi, NFTs, and gaming.",
-    remainingTickets: 87,
-    totalTickets: 200,
-    imageUrl:
-      "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=200&fit=crop",
-  },
-  {
-    id: "2",
-    name: "NFT Art Gala",
-    dateTime: Math.floor(Date.now() / 1000) + 86400 * 14,
-    venueName: "Digital Art Gallery",
-    ticketPrice: 50,
-    shortDescription: "Exclusive showcase of NFT artworks.",
-    remainingTickets: 30,
-    totalTickets: 50,
-    imageUrl:
-      "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=200&fit=crop",
-  },
-  {
-    id: "3",
-    name: "Decentralized Music Fest",
-    dateTime: Math.floor(Date.now() / 1000) + 86400 * 30,
-    venueName: "Open Air Amphitheater",
-    ticketPrice: 10,
-    shortDescription: "Live music powered by blockchain.",
-    remainingTickets: 150,
-    totalTickets: 500,
-    imageUrl:
-      "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=200&fit=crop",
-  },
-  {
-    id: "4",
-    name: "Past Tech Conference",
-    dateTime: Math.floor(Date.now() / 1000) - 86400 * 5,
-    venueName: "Innovation Hub",
-    ticketPrice: 15,
-    shortDescription: "A look back at tech trends.",
-    remainingTickets: 0,
-    totalTickets: 100,
-    // No image for this event - will show background pattern
-  },
-  {
-    id: "5",
-    name: "Web3 Gaming Expo",
-    dateTime: Math.floor(Date.now() / 1000) + 86400 * 2,
-    venueName: "Gamer's Paradise",
-    ticketPrice: 5,
-    shortDescription: "Explore the future of gaming.",
-    remainingTickets: 200,
-    totalTickets: 300,
-    imageUrl:
-      "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=200&fit=crop",
-  },
-  {
-    id: "6",
-    name: "Community Meetup: Web3 Future",
-    dateTime: Math.floor(Date.now() / 1000) + 86400 * 10,
-    venueName: "Local Co-working Space",
-    ticketPrice: 2,
-    shortDescription:
-      "A casual meetup for Web3 enthusiasts to discuss the latest trends, share projects, and network. Beginners welcome! Refreshments will be provided.",
-    remainingTickets: 50,
-    totalTickets: 50,
-    // No image for this event - will show background pattern
-  },
-  {
-    id: "7",
-    name: "DeFi Yield Farming Workshop",
-    dateTime: Math.floor(Date.now() / 1000) - 86400 * 0.5, // Started 12 hours ago (ongoing)
-    venueName: "Blockchain Academy",
-    ticketPrice: 30,
-    shortDescription:
-      "Learn advanced yield farming strategies and protocols. Hands-on workshop with live trading demos.",
-    remainingTickets: 8,
-    totalTickets: 40,
-    imageUrl:
-      "https://images.unsplash.com/photo-1559081842-5024d0b8c56e?w=400&h=200&fit=crop",
-  },
-  {
-    id: "8",
-    name: "Move Smart Contract Bootcamp",
-    dateTime: Math.floor(Date.now() / 1000) - 86400 * 1, // Started 1 day ago (ongoing)
-    venueName: "Code Academy",
-    ticketPrice: 45,
-    shortDescription:
-      "Intensive 3-day bootcamp covering Move programming language for Sui blockchain development.",
-    remainingTickets: 12,
-    totalTickets: 25,
-    imageUrl:
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=200&fit=crop",
-  },
-];
-
-export default function EventList({
-  initialEvents = mockEvents,
-}: EventListProps) {
-  const [events, setEvents] = useState<Event[]>(initialEvents);
+export default function EventList({}: EventListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState<
     "all" | "upcoming" | "past" | "ongoing"
@@ -146,15 +61,43 @@ export default function EventList({
   const isWalletConnected = !!account;
   const walletAddress = account?.address;
 
-  const { data } = useQuery({
+  const { data: apiEvents, isLoading } = useQuery<ApiEvent[]>({
     queryKey: ["all events"],
     queryFn: async () => {
-      const data = await fetch("http://localhost:3001/api/events");
-      return data.json();
+      const response = await fetch("http://localhost:3001/api/events");
+      return response.json();
     },
   });
 
-  console.log(data);
+  // Convert API events to the format EventCard expects
+  const events: Event[] = useMemo(() => {
+    if (!apiEvents) return [];
+
+    return apiEvents.map((apiEvent) => ({
+      id: apiEvent.id,
+      name: apiEvent.name,
+      dateTime: Math.floor(new Date(apiEvent.startTime).getTime() / 1000), // Convert to Unix timestamp
+      venueName: apiEvent.venue,
+      ticketPrice: parseFloat(apiEvent.ticketPrice),
+      shortDescription: apiEvent.description,
+      remainingTickets: apiEvent.totalTickets - apiEvent.ticketsSold,
+      totalTickets: apiEvent.totalTickets,
+      imageUrl: apiEvent.imgUrl || undefined,
+    }));
+  }, [apiEvents]);
+
+  const getEventStatus = (
+    startTime: string,
+    endTime: string
+  ): "upcoming" | "ongoing" | "past" => {
+    const now = new Date();
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+
+    if (now < start) return "upcoming";
+    if (now >= start && now <= end) return "ongoing";
+    return "past";
+  };
 
   const handleBuyTicket = async (
     eventId: string,
@@ -175,52 +118,50 @@ export default function EventList({
 
     // Simulate success/failure
     const success = Math.random() > 0.2; // 80% success rate
-    if (success) {
-      setEvents((prevEvents) =>
-        prevEvents.map((e) =>
-          e.id === eventId
-            ? {
-                ...e,
-                remainingTickets: Math.max(
-                  0,
-                  e.remainingTickets - recipients.length
-                ),
-              }
-            : e
-        )
-      );
-      return "success";
-    } else {
-      return "failed";
-    }
+    return success ? "success" : "failed";
   };
 
   const filteredEvents = useMemo(() => {
+    if (!events || !apiEvents) return [];
+
     let tempEvents = [...events];
-    const now = Math.floor(Date.now() / 1000);
-    const eventDuration = 86400 * 2; // Assume events last 2 days (same as EventCard)
+    let tempApiEvents = [...apiEvents];
 
     // Date filter
     if (dateFilter === "upcoming") {
-      tempEvents = tempEvents.filter((event) => event.dateTime > now);
+      tempApiEvents = tempApiEvents.filter(
+        (event) => getEventStatus(event.startTime, event.endTime) === "upcoming"
+      );
     } else if (dateFilter === "past") {
-      tempEvents = tempEvents.filter(
-        (event) => event.dateTime + eventDuration < now
+      tempApiEvents = tempApiEvents.filter(
+        (event) => getEventStatus(event.startTime, event.endTime) === "past"
       );
     } else if (dateFilter === "ongoing") {
-      tempEvents = tempEvents.filter(
-        (event) => event.dateTime <= now && now < event.dateTime + eventDuration
+      tempApiEvents = tempApiEvents.filter(
+        (event) => getEventStatus(event.startTime, event.endTime) === "ongoing"
       );
     }
+
+    // Get the filtered event IDs
+    const filteredIds = new Set(tempApiEvents.map((e) => e.id));
+    tempEvents = tempEvents.filter((e) => filteredIds.has(e.id));
 
     // Price filter
     if (priceFilter !== "all") {
       tempEvents = tempEvents.filter((event) => {
         if (priceFilter === "0-10")
-          return event.ticketPrice > 0 && event.ticketPrice <= 10;
+          return (
+            event.ticketPrice > 0 && event.ticketPrice <= 10 * 10 ** SUI_DECIMALS
+          );
         if (priceFilter === "10-50")
-          return event.ticketPrice > 10 && event.ticketPrice <= 50;
-        if (priceFilter === "50+") return event.ticketPrice > 50;
+          return (
+            event.ticketPrice > 10 * 10 ** SUI_DECIMALS &&
+            event.ticketPrice <= 50 * 10 ** SUI_DECIMALS
+          );
+        if (priceFilter === "50+") {
+          console.log(event.ticketPrice);
+          return event.ticketPrice > 50 * 10 ** SUI_DECIMALS;
+        }
         return true;
       });
     }
@@ -237,10 +178,25 @@ export default function EventList({
     }
 
     return tempEvents;
-  }, [events, searchTerm, dateFilter, priceFilter]);
+  }, [events, apiEvents, searchTerm, dateFilter, priceFilter]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-aqua">
+        <Loader2 className="h-12 w-12 animate-spin text-sea mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Loading Events</h2>
+        <p>Fetching available events...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-4 md:p-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-sea">Discover Events</h1>
+      </div>
+
+      {/* Filter and Search Controls */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-grow">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -276,16 +232,16 @@ export default function EventList({
                 Upcoming
               </SelectItem>
               <SelectItem
-                value="past"
-                className="hover:bg-sea hover:text-deep-ocean"
-              >
-                Past
-              </SelectItem>
-              <SelectItem
                 value="ongoing"
                 className="hover:bg-sea hover:text-deep-ocean"
               >
                 Ongoing
+              </SelectItem>
+              <SelectItem
+                value="past"
+                className="hover:bg-sea hover:text-deep-ocean"
+              >
+                Past
               </SelectItem>
             </SelectContent>
           </Select>
@@ -326,6 +282,7 @@ export default function EventList({
         </div>
       </div>
 
+      {/* Events List */}
       {filteredEvents.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredEvents.map((event) => (
@@ -339,9 +296,13 @@ export default function EventList({
           ))}
         </div>
       ) : (
-        <p className="text-center text-aqua text-lg py-10">
-          No events match your criteria.
-        </p>
+        <div className="flex flex-col items-center justify-center h-64 text-aqua bg-ocean p-6 rounded-lg border border-sea">
+          <Search className="h-12 w-12 text-sea mb-4" />
+          <h2 className="text-xl font-semibold mb-2">No Events Found</h2>
+          <p>
+            No events match your search criteria. Try adjusting your filters.
+          </p>
+        </div>
       )}
     </div>
   );

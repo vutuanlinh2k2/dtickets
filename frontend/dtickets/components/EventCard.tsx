@@ -26,6 +26,7 @@ import BuyTicketModal from "./BuyTicketModal";
 import ProcessingOverlay from "./ProcessingOverlay";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
+import { formatSuiAmount } from "../lib/formatSuiAmount";
 
 interface EventCardProps {
   event: Event;
@@ -210,7 +211,7 @@ export default function EventCard({
             {event.shortDescription}
           </p>
           <div className="flex items-center text-aqua group-hover:text-cloud transition-colors duration-300">
-            <Tag className="mr-2 h-4 w-4" /> {event.ticketPrice} SUI
+            <Tag className="mr-2 h-4 w-4" /> {formatSuiAmount(event.ticketPrice.toString())} SUI
           </div>
           <div className="flex items-center text-aqua group-hover:text-cloud transition-colors duration-300">
             <Users className="mr-2 h-4 w-4" /> {currentRemainingTickets}/
