@@ -3,13 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import {
-  TicketIcon,
-  AlertTriangle,
-  CalendarDays,
-  MapPin,
-  Loader2,
-} from "lucide-react"
+import { TicketIcon, AlertTriangle, CalendarDays, MapPin, Loader2 } from "lucide-react"
 import { formatUnixTimestamp } from "@/lib/utils"
 
 interface OwnedTicket {
@@ -28,12 +22,10 @@ interface MyTicketsListProps {
 }
 
 // Mock function to fetch tickets for a wallet
-const fetchMockUserTickets = async (
-  address: string | null
-): Promise<OwnedTicket[]> => {
+const fetchMockUserTickets = async (address: string | null): Promise<OwnedTicket[]> => {
   if (!address) return []
   console.log(`Fetching tickets for ${address}...`)
-  await new Promise(resolve => setTimeout(resolve, 1500)) // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 1500)) // Simulate API delay
 
   const now = Math.floor(Date.now() / 1000)
 
@@ -132,10 +124,7 @@ export default function MyTicketsList({ walletAddress }: MyTicketsListProps) {
       <div className="flex flex-col items-center justify-center h-64 text-aqua">
         <TicketIcon className="h-12 w-12 text-sea mb-4" />
         <h2 className="text-xl font-semibold mb-2">No Tickets Found</h2>
-        <p>
-          You don't own any tickets yet. Start by purchasing tickets to upcoming
-          events!
-        </p>
+        <p>You don't own any tickets yet. Start by purchasing tickets to upcoming events!</p>
       </div>
     )
   }
@@ -145,7 +134,7 @@ export default function MyTicketsList({ walletAddress }: MyTicketsListProps) {
       <h1 className="text-3xl font-bold text-sea mb-6">My Tickets</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {tickets.map(ticket => (
+        {tickets.map((ticket) => (
           <Card key={ticket.id} className="bg-ocean text-cloud border-sea">
             <CardHeader>
               <div className="flex justify-between items-start">
@@ -154,14 +143,8 @@ export default function MyTicketsList({ walletAddress }: MyTicketsListProps) {
                   {ticket.eventName}
                 </CardTitle>
                 <Badge
-                  variant={
-                    ticket.status === "upcoming" ? "default" : "secondary"
-                  }
-                  className={
-                    ticket.status === "upcoming"
-                      ? "bg-green-600 text-white"
-                      : "bg-gray-600 text-white"
-                  }
+                  variant={ticket.status === "upcoming" ? "default" : "secondary"}
+                  className={ticket.status === "upcoming" ? "bg-green-600 text-white" : "bg-gray-600 text-white"}
                 >
                   {ticket.status === "upcoming" ? "Upcoming" : "Past"}
                 </Badge>
@@ -178,15 +161,11 @@ export default function MyTicketsList({ walletAddress }: MyTicketsListProps) {
               </div>
               <div className="space-y-1">
                 <p className="text-aqua text-sm">Ticket ID:</p>
-                <p className="text-cloud font-mono text-sm">
-                  {ticket.ticketNumber}
-                </p>
+                <p className="text-cloud font-mono text-sm">{ticket.ticketNumber}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-aqua text-sm">Purchased:</p>
-                <p className="text-cloud text-sm">
-                  {formatUnixTimestamp(ticket.purchaseDate)}
-                </p>
+                <p className="text-cloud text-sm">{formatUnixTimestamp(ticket.purchaseDate)}</p>
               </div>
             </CardContent>
           </Card>

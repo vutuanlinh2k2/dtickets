@@ -5,10 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export const formatUnixTimestamp = (
-  timestamp: number,
-  includeTime = true
-): string => {
+export const formatUnixTimestamp = (timestamp: number, includeTime = true): string => {
   const date = new Date(timestamp * 1000)
   const options: Intl.DateTimeFormatOptions = {
     year: "numeric",

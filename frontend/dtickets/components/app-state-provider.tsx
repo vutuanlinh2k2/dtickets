@@ -1,12 +1,6 @@
 "use client"
 
-import {
-  createContext,
-  useState,
-  useContext,
-  type ReactNode,
-  useEffect,
-} from "react"
+import { createContext, useState, useContext, type ReactNode, useEffect } from "react"
 
 interface AppStateContextType {
   isWalletConnected: boolean
@@ -15,9 +9,7 @@ interface AppStateContextType {
   disconnectWallet: () => void
 }
 
-const AppStateContext = createContext<AppStateContextType | undefined>(
-  undefined
-)
+const AppStateContext = createContext<AppStateContextType | undefined>(undefined)
 
 export const AppStateProvider = ({ children }: { children: ReactNode }) => {
   const [isWalletConnected, setIsWalletConnected] = useState(false)
@@ -47,14 +39,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AppStateContext.Provider
-      value={{
-        isWalletConnected,
-        walletAddress,
-        connectWallet,
-        disconnectWallet,
-      }}
-    >
+    <AppStateContext.Provider value={{ isWalletConnected, walletAddress, connectWallet, disconnectWallet }}>
       {children}
     </AppStateContext.Provider>
   )

@@ -4,13 +4,7 @@ import { useState, type FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AlertCircle, Loader2, Plus, Trash2, User } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
@@ -29,15 +23,11 @@ interface BuyTicketModalProps {
   ticketPrice: number
   remainingTickets: number
   userWalletAddress: string
-  onPurchase: (
-    recipients: string[]
-  ) => Promise<"success" | "failed" | "no_tickets">
+  onPurchase: (recipients: string[]) => Promise<"success" | "failed" | "no_tickets">
 }
 
 // Sui address validation (simplified - in real app would be more comprehensive)
-const validateSuiAddress = (
-  address: string
-): { isValid: boolean; errorMessage?: string } => {
+const validateSuiAddress = (address: string): { isValid: boolean; errorMessage?: string } => {
   if (!address.trim()) {
     return { isValid: false, errorMessage: "Address is required" }
   }
@@ -54,10 +44,7 @@ const validateSuiAddress = (
   // Check for valid hex characters
   const hexPattern = /^0x[a-fA-F0-9]+$/
   if (!hexPattern.test(address)) {
-    return {
-      isValid: false,
-      errorMessage: "Address contains invalid characters",
-    }
+    return { isValid: false, errorMessage: "Address contains invalid characters" }
   }
 
   return { isValid: true }
@@ -80,12 +67,8 @@ export default function BuyTicketModal({
     },
   ])
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<
-    "idle" | "success" | "failed" | "no_tickets"
-  >("idle")
-  const [recipientIdToUpdate, setRecipientIdToUpdate] = useState<string | null>(
-    null
-  )
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "failed" | "no_tickets">("idle")
+  const [recipientIdToUpdate, setRecipientIdToUpdate] = useState<string | null>(null)
   const { toast } = useToast()
 
   const addRecipient = () => {
@@ -102,14 +85,14 @@ export default function BuyTicketModal({
 
   const removeRecipient = (id: string) => {
     if (recipients.length > 1) {
-      setRecipients(recipients.filter(r => r.id !== id))
+      setRecipients(recipients.filter((r) => r.id !== id))
     }
   }
 
   const updateRecipientAddress = (id: string, address: string) => {
     const validation = validateSuiAddress(address)
     setRecipients(
-      recipients.map(r =>
+      recipients.map((r) =>
         r.id === id
           ? {
               ...r,
@@ -117,8 +100,8 @@ export default function BuyTicketModal({
               isValid: validation.isValid,
               errorMessage: validation.errorMessage,
             }
-          : r
-      )
+          : r,
+      ),
     )
   }
 
@@ -131,13 +114,13 @@ export default function BuyTicketModal({
     setSubmitStatus("idle")
 
     // Validate all addresses
-    const allValid = recipients.every(r => r.isValid && r.address.trim())
+    const allValid = recipients.every((r) => r.isValid && r.address.trim())
     if (!allValid) {
       return
     }
 
     // Check for duplicate addresses
-    const addresses = recipients.map(r => r.address.toLowerCase())
+    const addresses = recipients.map((r) => r.address.toLowerCase())
     const uniqueAddresses = new Set(addresses)
     if (addresses.length !== uniqueAddresses.size) {
       toast({
@@ -151,7 +134,7 @@ export default function BuyTicketModal({
     setIsSubmitting(true)
 
     try {
-      const validAddresses = recipients.map(r => r.address)
+      const validAddresses = recipients.map((r) => r.address)
       const result = await onPurchase(validAddresses)
       setSubmitStatus(result)
 
@@ -166,15 +149,13 @@ export default function BuyTicketModal({
       } else if (result === "failed") {
         toast({
           title: "Purchase Failed",
-          description:
-            "There was an error processing your ticket purchase. Please try again.",
+          description: "There was an error processing your ticket purchase. Please try again.",
           variant: "destructive",
         })
       } else if (result === "no_tickets") {
         toast({
           title: "Not Enough Tickets",
-          description:
-            "There are not enough tickets available for your purchase.",
+          description: "There are not enough tickets available for your purchase.",
           variant: "destructive",
         })
       }
@@ -207,12 +188,10 @@ export default function BuyTicketModal({
 
   const totalCost = recipients.length * ticketPrice
   const canAddMore = recipients.length < remainingTickets
-  const allValid = recipients.every(r => r.isValid && r.address.trim())
+  const allValid = recipients.every((r) => r.isValid && r.address.trim())
 
   // Check if user's address is already used in any recipient
-  const isUserAddressUsed = recipients.some(
-    r => r.address.toLowerCase() === userWalletAddress.toLowerCase()
-  )
+  const isUserAddressUsed = recipients.some((r) => r.address.toLowerCase() === userWalletAddress.toLowerCase())
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -220,8 +199,7 @@ export default function BuyTicketModal({
         <DialogHeader>
           <DialogTitle className="text-sea text-2xl">Buy Tickets</DialogTitle>
           <DialogDescription className="text-aqua">
-            Purchase tickets for "{eventName}". You can buy tickets for yourself
-            or others.
+            Purchase tickets for "{eventName}". You can buy tickets for yourself or others.
           </DialogDescription>
         </DialogHeader>
 
@@ -230,21 +208,15 @@ export default function BuyTicketModal({
           <div className="bg-deep-ocean p-4 rounded-lg border border-sea">
             <div className="flex justify-between items-center mb-2">
               <span className="text-aqua">Tickets:</span>
-              <span className="text-cloud font-semibold">
-                {recipients.length}
-              </span>
+              <span className="text-cloud font-semibold">{recipients.length}</span>
             </div>
             <div className="flex justify-between items-center mb-2">
               <span className="text-aqua">Price per ticket:</span>
-              <span className="text-cloud font-semibold">
-                {ticketPrice === 0 ? "Free" : `${ticketPrice} SUI`}
-              </span>
+              <span className="text-cloud font-semibold">{ticketPrice === 0 ? "Free" : `${ticketPrice} SUI`}</span>
             </div>
             <div className="flex justify-between items-center border-t border-sea pt-2">
               <span className="text-aqua font-semibold">Total:</span>
-              <span className="text-sea font-bold text-lg">
-                {totalCost === 0 ? "Free" : `${totalCost} SUI`}
-              </span>
+              <span className="text-sea font-bold text-lg">{totalCost === 0 ? "Free" : `${totalCost} SUI`}</span>
             </div>
           </div>
 
@@ -265,9 +237,7 @@ export default function BuyTicketModal({
           {/* Recipients List */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <Label className="text-aqua font-semibold">
-                Ticket Recipients
-              </Label>
+              <Label className="text-aqua font-semibold">Ticket Recipients</Label>
               {canAddMore && (
                 <Button
                   type="button"
@@ -283,16 +253,11 @@ export default function BuyTicketModal({
             </div>
 
             {recipients.map((recipient, index) => {
-              const isCurrentUserAddress =
-                recipient.address.toLowerCase() ===
-                userWalletAddress.toLowerCase()
+              const isCurrentUserAddress = recipient.address.toLowerCase() === userWalletAddress.toLowerCase()
               const canUseMyAddress = !isUserAddressUsed || isCurrentUserAddress
 
               return (
-                <div
-                  key={recipient.id}
-                  className="bg-deep-ocean p-4 rounded-lg border border-sea space-y-3"
-                >
+                <div key={recipient.id} className="bg-deep-ocean p-4 rounded-lg border border-sea space-y-3">
                   <div className="flex justify-between items-center">
                     <Badge variant="outline" className="border-sea text-aqua">
                       Ticket #{index + 1}
@@ -314,14 +279,10 @@ export default function BuyTicketModal({
                     <div className="flex gap-2">
                       <Input
                         value={recipient.address}
-                        onChange={e =>
-                          updateRecipientAddress(recipient.id, e.target.value)
-                        }
+                        onChange={(e) => updateRecipientAddress(recipient.id, e.target.value)}
                         placeholder="0x..."
                         className={`flex-1 bg-ocean border-sea text-cloud focus:ring-sea ${
-                          !recipient.isValid && recipient.address
-                            ? "border-red-500"
-                            : ""
+                          !recipient.isValid && recipient.address ? "border-red-500" : ""
                         }`}
                       />
                       <Button
@@ -337,14 +298,10 @@ export default function BuyTicketModal({
                       </Button>
                     </div>
                     {!recipient.isValid && recipient.errorMessage && (
-                      <p className="text-sm text-red-400">
-                        {recipient.errorMessage}
-                      </p>
+                      <p className="text-sm text-red-400">{recipient.errorMessage}</p>
                     )}
                     {!canUseMyAddress && !isCurrentUserAddress && (
-                      <p className="text-sm text-yellow-400">
-                        Your address is already used for another ticket
-                      </p>
+                      <p className="text-sm text-yellow-400">Your address is already used for another ticket</p>
                     )}
                   </div>
                 </div>
@@ -394,7 +351,7 @@ BuyTicketModal.defaultProps = {
   userWalletAddress: "0x1234567890abcdef1234567890abcdef12345678",
   onPurchase: async (recipients: string[]) => {
     console.log("Purchasing tickets for:", recipients)
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000))
     return Math.random() > 0.2 ? "success" : "failed"
   },
 }

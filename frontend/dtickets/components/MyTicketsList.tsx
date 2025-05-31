@@ -3,13 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import {
-  TicketIcon,
-  AlertTriangle,
-  CalendarDays,
-  MapPin,
-  Loader2,
-} from "lucide-react"
+import { TicketIcon, AlertTriangle, CalendarDays, MapPin, Loader2 } from "lucide-react"
 import { formatUnixTimestamp } from "@/lib/utils"
 import Image from "next/image"
 
@@ -30,12 +24,10 @@ interface MyTicketsListProps {
 }
 
 // Mock function to fetch tickets for a wallet
-const fetchMockUserTickets = async (
-  address: string | null
-): Promise<OwnedTicket[]> => {
+const fetchMockUserTickets = async (address: string | null): Promise<OwnedTicket[]> => {
   if (!address) return []
   console.log(`Fetching tickets for ${address}...`)
-  await new Promise(resolve => setTimeout(resolve, 1500)) // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 1500)) // Simulate API delay
 
   const now = Math.floor(Date.now() / 1000)
 
@@ -50,8 +42,7 @@ const fetchMockUserTickets = async (
       ticketNumber: "NFT#00123",
       purchaseDate: now - 86400 * 2, // 2 days ago
       status: "upcoming",
-      imageUrl:
-        "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=200&fit=crop",
+      imageUrl: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=200&fit=crop",
     },
     {
       id: "ticket2",
@@ -62,8 +53,7 @@ const fetchMockUserTickets = async (
       ticketNumber: "NFT#00456",
       purchaseDate: now - 86400 * 5, // 5 days ago
       status: "upcoming",
-      imageUrl:
-        "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=200&fit=crop",
+      imageUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=200&fit=crop",
     },
     {
       id: "ticket3",
@@ -85,8 +75,7 @@ const fetchMockUserTickets = async (
       ticketNumber: "NFT#00321",
       purchaseDate: now - 86400 * 8, // 8 days ago
       status: "past",
-      imageUrl:
-        "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=200&fit=crop",
+      imageUrl: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=200&fit=crop",
     },
     {
       id: "ticket5",
@@ -142,10 +131,7 @@ export default function MyTicketsList({ walletAddress }: MyTicketsListProps) {
       <div className="flex flex-col items-center justify-center h-64 text-aqua">
         <TicketIcon className="h-12 w-12 text-sea mb-4" />
         <h2 className="text-xl font-semibold mb-2">No Tickets Found</h2>
-        <p>
-          You don't own any tickets yet. Start by purchasing tickets to upcoming
-          events!
-        </p>
+        <p>You don't own any tickets yet. Start by purchasing tickets to upcoming events!</p>
       </div>
     )
   }
@@ -155,7 +141,7 @@ export default function MyTicketsList({ walletAddress }: MyTicketsListProps) {
       <h1 className="text-3xl font-bold text-sea mb-6">My Tickets</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {tickets.map(ticket => (
+        {tickets.map((ticket) => (
           <Card
             key={ticket.id}
             className="bg-ocean text-cloud border-sea overflow-hidden hover:shadow-2xl hover:shadow-sea/30 hover:border-aqua hover:border-2 transition-all duration-300 cursor-pointer group hover:bg-ocean/80"
@@ -196,14 +182,8 @@ export default function MyTicketsList({ walletAddress }: MyTicketsListProps) {
                   {ticket.eventName}
                 </CardTitle>
                 <Badge
-                  variant={
-                    ticket.status === "upcoming" ? "default" : "secondary"
-                  }
-                  className={
-                    ticket.status === "upcoming"
-                      ? "bg-green-600 text-white"
-                      : "bg-gray-600 text-white"
-                  }
+                  variant={ticket.status === "upcoming" ? "default" : "secondary"}
+                  className={ticket.status === "upcoming" ? "bg-green-600 text-white" : "bg-gray-600 text-white"}
                 >
                   {ticket.status === "upcoming" ? "Upcoming" : "Past"}
                 </Badge>
@@ -219,17 +199,13 @@ export default function MyTicketsList({ walletAddress }: MyTicketsListProps) {
                 {ticket.venueName}
               </div>
               <div className="space-y-1">
-                <p className="text-aqua text-sm group-hover:text-cloud transition-colors duration-300">
-                  Ticket ID:
-                </p>
+                <p className="text-aqua text-sm group-hover:text-cloud transition-colors duration-300">Ticket ID:</p>
                 <p className="text-cloud font-mono text-sm group-hover:text-sea transition-colors duration-300">
                   {ticket.ticketNumber}
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-aqua text-sm group-hover:text-cloud transition-colors duration-300">
-                  Purchased:
-                </p>
+                <p className="text-aqua text-sm group-hover:text-cloud transition-colors duration-300">Purchased:</p>
                 <p className="text-cloud text-sm group-hover:text-sea transition-colors duration-300">
                   {formatUnixTimestamp(ticket.purchaseDate)}
                 </p>

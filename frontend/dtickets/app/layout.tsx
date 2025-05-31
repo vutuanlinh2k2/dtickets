@@ -22,8 +22,7 @@ export default function RootLayout({
           <HeaderClient />
           <main className="flex-grow container mx-auto py-8">{children}</main>
           <footer className="bg-ocean border-t border-sea p-4 text-center text-aqua text-sm">
-            © {new Date().getFullYear()} SuiTicketing Platform. All rights
-            reserved.
+            © {new Date().getFullYear()} SuiTicketing Platform. All rights reserved.
           </footer>
           <Toaster />
         </AppStateProvider>
