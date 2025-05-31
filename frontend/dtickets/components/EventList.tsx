@@ -36,7 +36,7 @@ const mockEvents: Event[] = [
       "Join us for an immersive deep dive into the Sui ecosystem, featuring keynote speakers, hands-on workshops, networking opportunities, and exclusive insights into the future of decentralized applications on the Sui blockchain. This is a must-attend event for developers, investors, and enthusiasts alike who are keen to explore the cutting-edge technology and potential of Sui. We will cover topics ranging from Move programming to DeFi, NFTs, and gaming.",
     remainingTickets: 87,
     totalTickets: 200,
-    imageUrl: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=200&fit=crop",
+    // imageUrl: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=200&fit=crop",
   },
   {
     id: "2",
@@ -47,7 +47,7 @@ const mockEvents: Event[] = [
     shortDescription: "Exclusive showcase of NFT artworks.",
     remainingTickets: 30,
     totalTickets: 50,
-    imageUrl: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=200&fit=crop",
+    // imageUrl: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=200&fit=crop",
   },
   {
     id: "3",
@@ -58,7 +58,7 @@ const mockEvents: Event[] = [
     shortDescription: "Live music powered by blockchain.",
     remainingTickets: 150,
     totalTickets: 500,
-    imageUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=200&fit=crop",
+    // imageUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=200&fit=crop",
   },
   {
     id: "4",
@@ -80,7 +80,7 @@ const mockEvents: Event[] = [
     shortDescription: "Explore the future of gaming.",
     remainingTickets: 200,
     totalTickets: 300,
-    imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=200&fit=crop",
+    // imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=200&fit=crop",
   },
   {
     id: "6",
