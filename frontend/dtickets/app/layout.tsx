@@ -19,7 +19,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="bg-deep-ocean text-cloud min-h-screen flex flex-col">
+      <body
+        className="bg-deep-ocean text-cloud min-h-screen flex flex-col"
+        suppressHydrationWarning={true}
+      >
         <Providers>
           <AppStateProvider>
             <HeaderClient />
