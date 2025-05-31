@@ -140,6 +140,7 @@ export default function EventList({
     "all" | "upcoming" | "past" | "ongoing"
   >("all");
   const [priceFilter, setPriceFilter] = useState<string>("all");
+
   const account = useCurrentAccount();
   const isWalletConnected = !!account;
   const walletAddress = account?.address;
