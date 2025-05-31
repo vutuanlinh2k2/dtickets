@@ -7,7 +7,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { AlertCircle, CheckCircle, Loader2, AlertTriangle } from "lucide-react"
 
 interface FormData {
@@ -36,11 +43,14 @@ interface CreateEventFormProps {
       eventTimestamp: number
       ticketPriceNum: number
       totalTicketSupplyNum: number
-    },
+    }
   ) => Promise<boolean>
 }
 
-export default function CreateEventForm({ isWalletConnected, onCreateEvent }: CreateEventFormProps) {
+export default function CreateEventForm({
+  isWalletConnected,
+  onCreateEvent,
+}: CreateEventFormProps) {
   const [formData, setFormData] = useState<FormData>({
     eventName: "",
     description: "",
@@ -51,13 +61,18 @@ export default function CreateEventForm({ isWalletConnected, onCreateEvent }: Cr
   })
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
+  const [submitStatus, setSubmitStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle")
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {}
-    if (!formData.eventName.trim()) newErrors.eventName = "Event name is required."
-    if (!formData.description.trim()) newErrors.description = "Description is required."
-    if (!formData.venueName.trim()) newErrors.venueName = "Venue name is required."
+    if (!formData.eventName.trim())
+      newErrors.eventName = "Event name is required."
+    if (!formData.description.trim())
+      newErrors.description = "Description is required."
+    if (!formData.venueName.trim())
+      newErrors.venueName = "Venue name is required."
 
     if (!formData.eventDateTime) {
       newErrors.eventDateTime = "Event date and time are required."
@@ -69,10 +84,13 @@ export default function CreateEventForm({ isWalletConnected, onCreateEvent }: Cr
     }
 
     const price = Number.parseFloat(formData.ticketPrice)
-    if (isNaN(price) || price < 0) newErrors.ticketPrice = "Ticket price must be a non-negative number."
+    if (isNaN(price) || price < 0)
+      newErrors.ticketPrice = "Ticket price must be a non-negative number."
 
     const supply = Number.parseInt(formData.totalTicketSupply, 10)
-    if (isNaN(supply) || supply <= 0) newErrors.totalTicketSupply = "Total ticket supply must be a positive number."
+    if (isNaN(supply) || supply <= 0)
+      newErrors.totalTicketSupply =
+        "Total ticket supply must be a positive number."
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -89,7 +107,9 @@ export default function CreateEventForm({ isWalletConnected, onCreateEvent }: Cr
 
     setIsSubmitting(true)
 
-    const eventTimestamp = Math.floor(new Date(formData.eventDateTime).getTime() / 1000)
+    const eventTimestamp = Math.floor(
+      new Date(formData.eventDateTime).getTime() / 1000
+    )
     const ticketPriceNum = Number.parseFloat(formData.ticketPrice)
     const totalTicketSupplyNum = Number.parseInt(formData.totalTicketSupply, 10)
 
@@ -109,7 +129,7 @@ export default function CreateEventForm({ isWalletConnected, onCreateEvent }: Cr
       success = await onCreateEvent(eventDataToSubmit)
     } else {
       // Default simulation if no prop provided
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise(resolve => setTimeout(resolve, 2000))
       success = Math.random() > 0.2 // 80% success
     }
 
@@ -131,7 +151,9 @@ export default function CreateEventForm({ isWalletConnected, onCreateEvent }: Cr
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
     if (errors[e.target.name as keyof FormErrors]) {
       setErrors({ ...errors, [e.target.name]: undefined })
@@ -155,7 +177,9 @@ export default function CreateEventForm({ isWalletConnected, onCreateEvent }: Cr
     <Card className="w-full max-w-2xl mx-auto bg-ocean text-cloud border-sea">
       <CardHeader>
         <CardTitle className="text-sea text-2xl">Create New Event</CardTitle>
-        <CardDescription className="text-aqua">Fill in the details to list your event on the platform.</CardDescription>
+        <CardDescription className="text-aqua">
+          Fill in the details to list your event on the platform.
+        </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -185,7 +209,9 @@ export default function CreateEventForm({ isWalletConnected, onCreateEvent }: Cr
                 placeholder="e.g., Sui Summer Hackathon"
                 className="bg-deep-ocean border-sea text-cloud focus:ring-sea"
               />
-              {errors.eventName && <p className="text-sm text-red-400">{errors.eventName}</p>}
+              {errors.eventName && (
+                <p className="text-sm text-red-400">{errors.eventName}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="venueName" className="text-aqua">
@@ -199,7 +225,9 @@ export default function CreateEventForm({ isWalletConnected, onCreateEvent }: Cr
                 placeholder="e.g., Online or Physical Location"
                 className="bg-deep-ocean border-sea text-cloud focus:ring-sea"
               />
-              {errors.venueName && <p className="text-sm text-red-400">{errors.venueName}</p>}
+              {errors.venueName && (
+                <p className="text-sm text-red-400">{errors.venueName}</p>
+              )}
             </div>
           </div>
 
@@ -215,7 +243,9 @@ export default function CreateEventForm({ isWalletConnected, onCreateEvent }: Cr
               placeholder="Tell us more about your event..."
               className="bg-deep-ocean border-sea text-cloud focus:ring-sea min-h-[100px]"
             />
-            {errors.description && <p className="text-sm text-red-400">{errors.description}</p>}
+            {errors.description && (
+              <p className="text-sm text-red-400">{errors.description}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -231,7 +261,9 @@ export default function CreateEventForm({ isWalletConnected, onCreateEvent }: Cr
                 onChange={handleChange}
                 className="bg-deep-ocean border-sea text-cloud focus:ring-sea"
               />
-              {errors.eventDateTime && <p className="text-sm text-red-400">{errors.eventDateTime}</p>}
+              {errors.eventDateTime && (
+                <p className="text-sm text-red-400">{errors.eventDateTime}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ticketPrice" className="text-aqua">
@@ -248,7 +280,9 @@ export default function CreateEventForm({ isWalletConnected, onCreateEvent }: Cr
                 step="any"
                 className="bg-deep-ocean border-sea text-cloud focus:ring-sea"
               />
-              {errors.ticketPrice && <p className="text-sm text-red-400">{errors.ticketPrice}</p>}
+              {errors.ticketPrice && (
+                <p className="text-sm text-red-400">{errors.ticketPrice}</p>
+              )}
             </div>
           </div>
 
@@ -267,7 +301,9 @@ export default function CreateEventForm({ isWalletConnected, onCreateEvent }: Cr
               step="1"
               className="bg-deep-ocean border-sea text-cloud focus:ring-sea"
             />
-            {errors.totalTicketSupply && <p className="text-sm text-red-400">{errors.totalTicketSupply}</p>}
+            {errors.totalTicketSupply && (
+              <p className="text-sm text-red-400">{errors.totalTicketSupply}</p>
+            )}
           </div>
         </CardContent>
         <CardFooter>
@@ -276,7 +312,9 @@ export default function CreateEventForm({ isWalletConnected, onCreateEvent }: Cr
             className="w-full bg-sea text-deep-ocean hover:bg-opacity-80 disabled:opacity-50"
             disabled={isSubmitting}
           >
-            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {isSubmitting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : null}
             Create Event
           </Button>
         </CardFooter>
@@ -288,9 +326,9 @@ export default function CreateEventForm({ isWalletConnected, onCreateEvent }: Cr
 // Default props for Next.js
 CreateEventForm.defaultProps = {
   isWalletConnected: false,
-  onCreateEvent: async (data) => {
+  onCreateEvent: async data => {
     console.log("Default onCreateEvent:", data)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise(resolve => setTimeout(resolve, 1000))
     return true // Simulate success
   },
 }

@@ -19,7 +19,9 @@ export default function ProcessingOverlay({
         <Loader2 className="h-12 w-12 animate-spin text-sea mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-cloud mb-2">Please Wait</h3>
         <p className="text-aqua text-sm">{message}</p>
-        <p className="text-aqua text-xs mt-2 opacity-75">Do not close this window</p>
+        <p className="text-aqua text-xs mt-2 opacity-75">
+          Do not close this window
+        </p>
       </div>
     </div>
   )

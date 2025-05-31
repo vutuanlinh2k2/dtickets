@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export default function HeaderClient() {
-  const { isWalletConnected, walletAddress, connectWallet, disconnectWallet } = useAppState()
+  const { isWalletConnected, walletAddress, connectWallet, disconnectWallet } =
+    useAppState()
 
   const handleConnect = () => {
     // Simulate wallet connection
@@ -75,7 +76,9 @@ export default function HeaderClient() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-ocean text-aqua border-sea">
-                <DropdownMenuLabel className="text-aqua">Account</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-aqua">
+                  Account
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-sea" />
                 <DropdownMenuItem className="cursor-pointer hover:bg-sea hover:text-deep-ocean">
                   <Users className="mr-2 h-4 w-4" />

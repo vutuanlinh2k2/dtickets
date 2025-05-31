@@ -7,7 +7,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { AlertCircle, Loader2, X, ImageIcon } from "lucide-react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 
@@ -40,11 +46,15 @@ interface CreateEventModalProps {
       eventTimestamp: number
       ticketPriceNum: number
       totalTicketSupplyNum: number
-    },
+    }
   ) => Promise<boolean>
 }
 
-export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: CreateEventModalProps) {
+export default function CreateEventModal({
+  isOpen,
+  onClose,
+  onCreateEvent,
+}: CreateEventModalProps) {
   const [formData, setFormData] = useState<FormData>({
     eventName: "",
     description: "",
@@ -56,16 +66,21 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
   })
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
+  const [submitStatus, setSubmitStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle")
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {}
-    if (!formData.eventName.trim()) newErrors.eventName = "Event name is required."
-    if (!formData.description.trim()) newErrors.description = "Description is required."
-    if (!formData.venueName.trim()) newErrors.venueName = "Venue name is required."
+    if (!formData.eventName.trim())
+      newErrors.eventName = "Event name is required."
+    if (!formData.description.trim())
+      newErrors.description = "Description is required."
+    if (!formData.venueName.trim())
+      newErrors.venueName = "Venue name is required."
 
     if (!formData.eventDateTime) {
       newErrors.eventDateTime = "Event date and time are required."
@@ -77,10 +92,13 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
     }
 
     const price = Number.parseFloat(formData.ticketPrice)
-    if (isNaN(price) || price <= 0) newErrors.ticketPrice = "Ticket price must be greater than 0 SUI."
+    if (isNaN(price) || price <= 0)
+      newErrors.ticketPrice = "Ticket price must be greater than 0 SUI."
 
     const supply = Number.parseInt(formData.totalTicketSupply, 10)
-    if (isNaN(supply) || supply <= 0) newErrors.totalTicketSupply = "Total ticket supply must be a positive number."
+    if (isNaN(supply) || supply <= 0)
+      newErrors.totalTicketSupply =
+        "Total ticket supply must be a positive number."
 
     // Image validation (optional)
     if (formData.imageFile) {
@@ -89,7 +107,12 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
         newErrors.imageFile = "Image file must be smaller than 5MB."
       }
 
-      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+      ]
       if (!allowedTypes.includes(formData.imageFile.type)) {
         newErrors.imageFile = "Image must be JPEG, PNG, WebP, or GIF format."
       }
@@ -106,7 +129,7 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
 
       // Create preview
       const reader = new FileReader()
-      reader.onload = (e) => {
+      reader.onload = e => {
         setImagePreview(e.target?.result as string)
       }
       reader.readAsDataURL(file)
@@ -133,7 +156,9 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
 
     setIsSubmitting(true)
 
-    const eventTimestamp = Math.floor(new Date(formData.eventDateTime).getTime() / 1000)
+    const eventTimestamp = Math.floor(
+      new Date(formData.eventDateTime).getTime() / 1000
+    )
     const ticketPriceNum = Number.parseFloat(formData.ticketPrice)
     const totalTicketSupplyNum = Number.parseInt(formData.totalTicketSupply, 10)
 
@@ -154,7 +179,7 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
       success = await onCreateEvent(eventDataToSubmit)
     } else {
       // Default simulation if no prop provided
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise(resolve => setTimeout(resolve, 2000))
       success = Math.random() > 0.2 // 80% success
     }
 
@@ -190,13 +215,16 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
       // Show error toast
       toast({
         title: "Event Creation Failed",
-        description: "There was an error creating your event. Please try again.",
+        description:
+          "There was an error creating your event. Please try again.",
         variant: "destructive",
       })
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
     if (errors[e.target.name as keyof FormErrors]) {
       setErrors({ ...errors, [e.target.name]: undefined })
@@ -232,7 +260,9 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="w-full max-w-2xl bg-ocean text-cloud border-sea max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-sea text-2xl">Create New Event</DialogTitle>
+          <DialogTitle className="text-sea text-2xl">
+            Create New Event
+          </DialogTitle>
           <DialogDescription className="text-aqua">
             Fill in the details to list your event on the platform.
           </DialogDescription>
@@ -252,7 +282,10 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
             {imagePreview ? (
               <div className="relative w-full h-48 rounded-lg overflow-hidden border border-sea">
                 <Image
-                  src={imagePreview || "/placeholder.svg?height=200&width=400&query=event+preview"}
+                  src={
+                    imagePreview ||
+                    "/placeholder.svg?height=200&width=400&query=event+preview"
+                  }
                   alt="Event preview"
                   fill
                   className="object-cover"
@@ -274,8 +307,12 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
                 onClick={() => fileInputRef.current?.click()}
               >
                 <ImageIcon className="h-12 w-12 text-aqua mb-2" />
-                <p className="text-aqua text-sm mb-1">Click to upload an image</p>
-                <p className="text-aqua text-xs opacity-60">JPEG, PNG, WebP, or GIF (max 5MB)</p>
+                <p className="text-aqua text-sm mb-1">
+                  Click to upload an image
+                </p>
+                <p className="text-aqua text-xs opacity-60">
+                  JPEG, PNG, WebP, or GIF (max 5MB)
+                </p>
               </div>
             )}
             <input
@@ -285,7 +322,9 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
               onChange={handleImageChange}
               className="hidden"
             />
-            {errors.imageFile && <p className="text-sm text-red-400">{errors.imageFile}</p>}
+            {errors.imageFile && (
+              <p className="text-sm text-red-400">{errors.imageFile}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -301,7 +340,9 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
                 placeholder="e.g., Sui Summer Hackathon"
                 className="bg-deep-ocean border-sea text-cloud focus:ring-sea"
               />
-              {errors.eventName && <p className="text-sm text-red-400">{errors.eventName}</p>}
+              {errors.eventName && (
+                <p className="text-sm text-red-400">{errors.eventName}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="venueName" className="text-aqua">
@@ -315,7 +356,9 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
                 placeholder="e.g., Online or Physical Location"
                 className="bg-deep-ocean border-sea text-cloud focus:ring-sea"
               />
-              {errors.venueName && <p className="text-sm text-red-400">{errors.venueName}</p>}
+              {errors.venueName && (
+                <p className="text-sm text-red-400">{errors.venueName}</p>
+              )}
             </div>
           </div>
 
@@ -331,7 +374,9 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
               placeholder="Tell us more about your event..."
               className="bg-deep-ocean border-sea text-cloud focus:ring-sea min-h-[100px]"
             />
-            {errors.description && <p className="text-sm text-red-400">{errors.description}</p>}
+            {errors.description && (
+              <p className="text-sm text-red-400">{errors.description}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -347,7 +392,9 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
                 onChange={handleChange}
                 className="bg-deep-ocean border-sea text-cloud focus:ring-sea"
               />
-              {errors.eventDateTime && <p className="text-sm text-red-400">{errors.eventDateTime}</p>}
+              {errors.eventDateTime && (
+                <p className="text-sm text-red-400">{errors.eventDateTime}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ticketPrice" className="text-aqua">
@@ -364,7 +411,9 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
                 step="0.01"
                 className="bg-deep-ocean border-sea text-cloud focus:ring-sea"
               />
-              {errors.ticketPrice && <p className="text-sm text-red-400">{errors.ticketPrice}</p>}
+              {errors.ticketPrice && (
+                <p className="text-sm text-red-400">{errors.ticketPrice}</p>
+              )}
             </div>
           </div>
 
@@ -383,7 +432,9 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
               step="1"
               className="bg-deep-ocean border-sea text-cloud focus:ring-sea"
             />
-            {errors.totalTicketSupply && <p className="text-sm text-red-400">{errors.totalTicketSupply}</p>}
+            {errors.totalTicketSupply && (
+              <p className="text-sm text-red-400">{errors.totalTicketSupply}</p>
+            )}
           </div>
 
           <div className="flex gap-3 pt-4">
@@ -401,7 +452,9 @@ export default function CreateEventModal({ isOpen, onClose, onCreateEvent }: Cre
               className="flex-1 bg-sea text-deep-ocean hover:bg-opacity-80 disabled:opacity-50"
               disabled={isSubmitting}
             >
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isSubmitting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
               Create Event
             </Button>
           </div>

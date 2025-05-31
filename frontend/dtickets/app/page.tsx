@@ -7,8 +7,13 @@ export default function HomePage() {
   const { isWalletConnected, walletAddress } = useAppState()
   return (
     <div>
-      <h1 className="text-3xl font-bold text-sea mb-6 text-center">Discover Events</h1>
-      <EventList isWalletConnected={isWalletConnected} walletAddress={walletAddress} />
+      <h1 className="text-3xl font-bold text-sea mb-6 text-center">
+        Discover Events
+      </h1>
+      <EventList
+        isWalletConnected={isWalletConnected}
+        walletAddress={walletAddress}
+      />
     </div>
   )
 }

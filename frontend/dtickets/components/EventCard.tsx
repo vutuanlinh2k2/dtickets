@@ -1,9 +1,25 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Ticket, CalendarDays, MapPin, Tag, Users, AlertCircle, CheckCircle, Loader2 } from "lucide-react"
+import {
+  Ticket,
+  CalendarDays,
+  MapPin,
+  Tag,
+  Users,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+} from "lucide-react"
 import { formatUnixTimestamp } from "@/lib/utils"
 import type { Event } from "./EventList"
 import BuyTicketModal from "./BuyTicketModal"
@@ -14,14 +30,24 @@ interface EventCardProps {
   event: Event
   isWalletConnected: boolean
   walletAddress: string | null
-  onBuyTicket: (eventId: string, recipients: string[]) => Promise<"success" | "failed" | "no_tickets">
+  onBuyTicket: (
+    eventId: string,
+    recipients: string[]
+  ) => Promise<"success" | "failed" | "no_tickets">
 }
 
-export default function EventCard({ event, isWalletConnected, walletAddress, onBuyTicket }: EventCardProps) {
-  const [purchaseStatus, setPurchaseStatus] = useState<"idle" | "processing" | "success" | "failed" | "no_tickets">(
-    "idle",
+export default function EventCard({
+  event,
+  isWalletConnected,
+  walletAddress,
+  onBuyTicket,
+}: EventCardProps) {
+  const [purchaseStatus, setPurchaseStatus] = useState<
+    "idle" | "processing" | "success" | "failed" | "no_tickets"
+  >("idle")
+  const [currentRemainingTickets, setCurrentRemainingTickets] = useState(
+    event.remainingTickets
   )
-  const [currentRemainingTickets, setCurrentRemainingTickets] = useState(event.remainingTickets)
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [imageError, setImageError] = useState(false)
@@ -41,8 +67,12 @@ export default function EventCard({ event, isWalletConnected, walletAddress, onB
     setIsBuyModalOpen(true)
   }
 
-  const handlePurchase = async (recipients: string[]): Promise<"success" | "failed" | "no_tickets"> => {
-    console.log(`Attempting to buy ${recipients.length} tickets for event: ${event.id}`)
+  const handlePurchase = async (
+    recipients: string[]
+  ): Promise<"success" | "failed" | "no_tickets"> => {
+    console.log(
+      `Attempting to buy ${recipients.length} tickets for event: ${event.id}`
+    )
     console.log("Recipients:", recipients)
 
     setIsProcessing(true)
@@ -53,7 +83,9 @@ export default function EventCard({ event, isWalletConnected, walletAddress, onB
       setPurchaseStatus(result)
 
       if (result === "success") {
-        setCurrentRemainingTickets((prev) => Math.max(0, prev - recipients.length))
+        setCurrentRemainingTickets(prev =>
+          Math.max(0, prev - recipients.length)
+        )
       }
 
       return result
@@ -71,7 +103,10 @@ export default function EventCard({ event, isWalletConnected, walletAddress, onB
         {event.imageUrl && !imageError ? (
           <div className="relative w-full h-48 overflow-hidden">
             <Image
-              src={event.imageUrl || "/placeholder.svg?height=200&width=400&query=event+placeholder"}
+              src={
+                event.imageUrl ||
+                "/placeholder.svg?height=200&width=400&query=event+placeholder"
+              }
               alt={event.name}
               fill
               className="object-cover transition-all duration-500 group-hover:brightness-110 group-hover:contrast-110"
@@ -111,7 +146,8 @@ export default function EventCard({ event, isWalletConnected, walletAddress, onB
             {event.name}
           </CardTitle>
           <CardDescription className="text-aqua flex items-center group-hover:text-cloud transition-colors duration-300">
-            <CalendarDays className="mr-2 h-4 w-4" /> {formatUnixTimestamp(event.dateTime)}
+            <CalendarDays className="mr-2 h-4 w-4" />{" "}
+            {formatUnixTimestamp(event.dateTime)}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex-grow space-y-2">
@@ -128,7 +164,8 @@ export default function EventCard({ event, isWalletConnected, walletAddress, onB
             <Tag className="mr-2 h-4 w-4" /> {event.ticketPrice} SUI
           </div>
           <div className="flex items-center text-aqua group-hover:text-cloud transition-colors duration-300">
-            <Users className="mr-2 h-4 w-4" /> {currentRemainingTickets}/{event.totalTickets} available
+            <Users className="mr-2 h-4 w-4" /> {currentRemainingTickets}/
+            {event.totalTickets} available
           </div>
         </CardContent>
         <CardFooter className="flex-col items-stretch space-y-2">
@@ -145,14 +182,21 @@ export default function EventCard({ event, isWalletConnected, walletAddress, onB
           {(purchaseStatus === "failed" || purchaseStatus === "no_tickets") && (
             <div className="flex items-center justify-center text-red-400">
               <AlertCircle className="mr-2 h-4 w-4" />
-              {purchaseStatus === "failed" ? "Purchase Failed" : "No tickets left"}
+              {purchaseStatus === "failed"
+                ? "Purchase Failed"
+                : "No tickets left"}
             </div>
           )}
           {purchaseStatus !== "success" && (
             <Button
               onClick={handleBuyTicketClick}
               className="w-full bg-sea text-deep-ocean hover:bg-aqua hover:text-ocean disabled:bg-gray-500 transition-all duration-300"
-              disabled={!canBuy || purchaseStatus === "processing" || !isWalletConnected || isPastEvent}
+              disabled={
+                !canBuy ||
+                purchaseStatus === "processing" ||
+                !isWalletConnected ||
+                isPastEvent
+              }
             >
               <Ticket className="mr-2 h-4 w-4" />
               {isWalletConnected

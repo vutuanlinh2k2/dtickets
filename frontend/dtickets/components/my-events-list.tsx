@@ -4,7 +4,16 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CalendarDays, MapPin, DollarSign, AlertTriangle, Plus, Loader2, Clock, Ticket } from "lucide-react"
+import {
+  CalendarDays,
+  MapPin,
+  DollarSign,
+  AlertTriangle,
+  Plus,
+  Loader2,
+  Clock,
+  Ticket,
+} from "lucide-react"
 import { formatUnixTimestamp } from "@/lib/utils"
 import CreateEventModal from "./create-event-modal"
 import Image from "next/image"
@@ -29,10 +38,12 @@ interface MyEventsListProps {
 }
 
 // Mock function to fetch events created by the user
-const fetchMockCreatedEvents = async (address: string | null): Promise<CreatedEvent[]> => {
+const fetchMockCreatedEvents = async (
+  address: string | null
+): Promise<CreatedEvent[]> => {
   if (!address) return []
   console.log(`Fetching created events for ${address}...`)
-  await new Promise((resolve) => setTimeout(resolve, 1500))
+  await new Promise(resolve => setTimeout(resolve, 1500))
 
   const now = Math.floor(Date.now() / 1000)
 
@@ -115,7 +126,7 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
   const handleCreateEvent = async (eventData: any): Promise<boolean> => {
     console.log("Creating new event:", eventData)
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await new Promise(resolve => setTimeout(resolve, 2000))
 
     // Simulate success and refresh events list
     const success = Math.random() > 0.2 // 80% success rate
@@ -150,8 +161,13 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
     return (
       <div className="text-center py-10">
         <CalendarDays className="h-12 w-12 text-sea mx-auto mb-4" />
-        <p className="text-aqua text-lg mb-4">You haven't created any events yet.</p>
-        <Button className="bg-sea text-deep-ocean hover:bg-opacity-80" onClick={() => setIsCreateModalOpen(true)}>
+        <p className="text-aqua text-lg mb-4">
+          You haven't created any events yet.
+        </p>
+        <Button
+          className="bg-sea text-deep-ocean hover:bg-opacity-80"
+          onClick={() => setIsCreateModalOpen(true)}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Create Your First Event
         </Button>
@@ -164,15 +180,23 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
     )
   }
 
-  const totalRevenue = events.reduce((sum, event) => sum + event.totalRevenue, 0)
-  const upcomingEvents = events.filter((event) => event.status === "upcoming").length
-  const pastEvents = events.filter((event) => event.status === "past").length
+  const totalRevenue = events.reduce(
+    (sum, event) => sum + event.totalRevenue,
+    0
+  )
+  const upcomingEvents = events.filter(
+    event => event.status === "upcoming"
+  ).length
+  const pastEvents = events.filter(event => event.status === "past").length
 
   return (
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-sea">My Events</h1>
-        <Button className="bg-sea text-deep-ocean hover:bg-opacity-80" onClick={() => setIsCreateModalOpen(true)}>
+        <Button
+          className="bg-sea text-deep-ocean hover:bg-opacity-80"
+          onClick={() => setIsCreateModalOpen(true)}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Create New Event
         </Button>
@@ -185,7 +209,9 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-aqua text-sm">Total Revenue</p>
-                <p className="text-2xl font-bold text-sea">{totalRevenue} SUI</p>
+                <p className="text-2xl font-bold text-sea">
+                  {totalRevenue} SUI
+                </p>
               </div>
               <DollarSign className="h-8 w-8 text-sea" />
             </div>
@@ -219,8 +245,11 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
 
       {/* Events List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {events.map((event) => (
-          <Card key={event.id} className="bg-ocean text-cloud border-sea overflow-hidden">
+        {events.map(event => (
+          <Card
+            key={event.id}
+            className="bg-ocean text-cloud border-sea overflow-hidden"
+          >
             {/* Event Image or Background */}
             {event.imageUrl ? (
               <div className="relative w-full h-32 overflow-hidden">
@@ -255,7 +284,13 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
               <div className="flex justify-between items-start">
                 <CardTitle className="text-sea text-xl">{event.name}</CardTitle>
                 <Badge
-                  variant={event.status === "upcoming" ? "default" : event.status === "past" ? "secondary" : "outline"}
+                  variant={
+                    event.status === "upcoming"
+                      ? "default"
+                      : event.status === "past"
+                        ? "secondary"
+                        : "outline"
+                  }
                   className={
                     event.status === "upcoming"
                       ? "bg-green-600 text-white"
@@ -277,16 +312,22 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
                 <MapPin className="mr-2 h-4 w-4" /> {event.venueName}
               </div>
 
-              <p className="text-sm text-aqua line-clamp-2">{event.shortDescription}</p>
+              <p className="text-sm text-aqua line-clamp-2">
+                {event.shortDescription}
+              </p>
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-aqua">Ticket Price</p>
-                  <p className="text-cloud font-semibold">{event.ticketPrice} SUI</p>
+                  <p className="text-cloud font-semibold">
+                    {event.ticketPrice} SUI
+                  </p>
                 </div>
                 <div>
                   <p className="text-aqua">Revenue</p>
-                  <p className="text-cloud font-semibold">{event.totalRevenue} SUI</p>
+                  <p className="text-cloud font-semibold">
+                    {event.totalRevenue} SUI
+                  </p>
                 </div>
               </div>
 
@@ -300,7 +341,9 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
                 <div className="w-full bg-deep-ocean rounded-full h-2">
                   <div
                     className="bg-sea h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(event.soldTickets / event.totalTickets) * 100}%` }}
+                    style={{
+                      width: `${(event.soldTickets / event.totalTickets) * 100}%`,
+                    }}
                   ></div>
                 </div>
               </div>

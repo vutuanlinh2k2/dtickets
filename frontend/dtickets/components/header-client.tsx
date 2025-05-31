@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export default function HeaderClient() {
-  const { isWalletConnected, walletAddress, connectWallet, disconnectWallet } = useAppState()
+  const { isWalletConnected, walletAddress, connectWallet, disconnectWallet } =
+    useAppState()
 
   const handleConnect = () => {
     // Simulate wallet connection
@@ -36,15 +37,24 @@ export default function HeaderClient() {
           SuiTickets
         </Link>
         <nav className="space-x-6 flex items-center">
-          <Link href="/" className="text-aqua hover:text-sea transition-colors flex items-center">
+          <Link
+            href="/"
+            className="text-aqua hover:text-sea transition-colors flex items-center"
+          >
             <Calendar className="mr-1 h-4 w-4" />
             All Events
           </Link>
-          <Link href="/my-tickets" className="text-aqua hover:text-sea transition-colors flex items-center">
+          <Link
+            href="/my-tickets"
+            className="text-aqua hover:text-sea transition-colors flex items-center"
+          >
             <Ticket className="mr-1 h-4 w-4" />
             My Tickets
           </Link>
-          <Link href="/my-events" className="text-aqua hover:text-sea transition-colors flex items-center">
+          <Link
+            href="/my-events"
+            className="text-aqua hover:text-sea transition-colors flex items-center"
+          >
             <Users className="mr-1 h-4 w-4" />
             My Events
           </Link>
@@ -53,13 +63,18 @@ export default function HeaderClient() {
           {isWalletConnected ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="bg-ocean text-aqua border-sea hover:bg-sea hover:text-deep-ocean">
+                <Button
+                  variant="outline"
+                  className="bg-ocean text-aqua border-sea hover:bg-sea hover:text-deep-ocean"
+                >
                   <Wallet className="mr-2 h-4 w-4" />
                   {truncatedAddress}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-ocean text-aqua border-sea">
-                <DropdownMenuLabel className="text-aqua">Account</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-aqua">
+                  Account
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-sea" />
                 <DropdownMenuItem className="cursor-pointer hover:bg-sea hover:text-deep-ocean">
                   <Users className="mr-2 h-4 w-4" />
@@ -80,7 +95,10 @@ export default function HeaderClient() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button onClick={handleConnect} className="bg-sea text-deep-ocean hover:bg-opacity-80">
+            <Button
+              onClick={handleConnect}
+              className="bg-sea text-deep-ocean hover:bg-opacity-80"
+            >
               <LogIn className="mr-2 h-4 w-4" />
               Connect Wallet
             </Button>

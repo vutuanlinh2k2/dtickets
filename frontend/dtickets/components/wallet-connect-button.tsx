@@ -3,14 +3,22 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { LogIn, LogOut, Wallet } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface WalletConnectButtonProps {
   onConnect?: (address: string) => void
   onDisconnect?: () => void
 }
 
-export default function WalletConnectButton({ onConnect, onDisconnect }: WalletConnectButtonProps) {
+export default function WalletConnectButton({
+  onConnect,
+  onDisconnect,
+}: WalletConnectButtonProps) {
   const [isConnected, setIsConnected] = useState(false)
   const [walletAddress, setWalletAddress] = useState("")
 
@@ -54,20 +62,29 @@ export default function WalletConnectButton({ onConnect, onDisconnect }: WalletC
       {isConnected ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="bg-ocean text-aqua border-sea hover:bg-sea hover:text-deep-ocean">
+            <Button
+              variant="outline"
+              className="bg-ocean text-aqua border-sea hover:bg-sea hover:text-deep-ocean"
+            >
               <Wallet className="mr-2 h-4 w-4" />
               {truncatedAddress}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-ocean text-aqua border-sea">
-            <DropdownMenuItem onClick={handleDisconnect} className="cursor-pointer hover:bg-sea hover:text-deep-ocean">
+            <DropdownMenuItem
+              onClick={handleDisconnect}
+              className="cursor-pointer hover:bg-sea hover:text-deep-ocean"
+            >
               <LogOut className="mr-2 h-4 w-4" />
               Disconnect
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (
-        <Button onClick={handleConnect} className="bg-sea text-deep-ocean hover:bg-opacity-80">
+        <Button
+          onClick={handleConnect}
+          className="bg-sea text-deep-ocean hover:bg-opacity-80"
+        >
           <LogIn className="mr-2 h-4 w-4" />
           Connect Wallet
         </Button>

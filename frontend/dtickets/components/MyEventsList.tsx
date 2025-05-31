@@ -4,7 +4,16 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CalendarDays, MapPin, DollarSign, AlertTriangle, Plus, Loader2, Clock, Ticket } from "lucide-react"
+import {
+  CalendarDays,
+  MapPin,
+  DollarSign,
+  AlertTriangle,
+  Plus,
+  Loader2,
+  Clock,
+  Ticket,
+} from "lucide-react"
 import { formatUnixTimestamp } from "@/lib/utils"
 import CreateEventModal from "./CreateEventModal"
 import Image from "next/image"
@@ -29,10 +38,12 @@ interface MyEventsListProps {
 }
 
 // Mock function to fetch events created by the user
-const fetchMockCreatedEvents = async (address: string | null): Promise<CreatedEvent[]> => {
+const fetchMockCreatedEvents = async (
+  address: string | null
+): Promise<CreatedEvent[]> => {
   if (!address) return []
   console.log(`Fetching created events for ${address}...`)
-  await new Promise((resolve) => setTimeout(resolve, 1500))
+  await new Promise(resolve => setTimeout(resolve, 1500))
 
   const now = Math.floor(Date.now() / 1000)
 
@@ -49,7 +60,8 @@ const fetchMockCreatedEvents = async (address: string | null): Promise<CreatedEv
       remainingTickets: 87,
       totalRevenue: 113 * 25, // 2825 SUI
       status: "upcoming",
-      imageUrl: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=200&fit=crop",
+      imageUrl:
+        "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=200&fit=crop",
     },
     {
       id: "created2",
@@ -63,7 +75,8 @@ const fetchMockCreatedEvents = async (address: string | null): Promise<CreatedEv
       remainingTickets: 5,
       totalRevenue: 45 * 15, // 675 SUI
       status: "upcoming",
-      imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=200&fit=crop",
+      imageUrl:
+        "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=200&fit=crop",
     },
     {
       id: "created3",
@@ -115,7 +128,7 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
   const handleCreateEvent = async (eventData: any): Promise<boolean> => {
     console.log("Creating new event:", eventData)
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await new Promise(resolve => setTimeout(resolve, 2000))
 
     // Simulate success and refresh events list
     const success = Math.random() > 0.2 // 80% success rate
@@ -150,7 +163,9 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
     return (
       <div className="text-center py-10">
         <CalendarDays className="h-12 w-12 text-sea mx-auto mb-4" />
-        <p className="text-aqua text-lg mb-4">You haven't created any events yet.</p>
+        <p className="text-aqua text-lg mb-4">
+          You haven't created any events yet.
+        </p>
         <Button
           className="bg-sea text-deep-ocean hover:bg-aqua hover:text-ocean transition-all duration-300"
           onClick={() => setIsCreateModalOpen(true)}
@@ -167,9 +182,14 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
     )
   }
 
-  const totalRevenue = events.reduce((sum, event) => sum + event.totalRevenue, 0)
-  const upcomingEvents = events.filter((event) => event.status === "upcoming").length
-  const pastEvents = events.filter((event) => event.status === "past").length
+  const totalRevenue = events.reduce(
+    (sum, event) => sum + event.totalRevenue,
+    0
+  )
+  const upcomingEvents = events.filter(
+    event => event.status === "upcoming"
+  ).length
+  const pastEvents = events.filter(event => event.status === "past").length
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -191,7 +211,9 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-aqua text-sm">Total Revenue</p>
-                <p className="text-2xl font-bold text-sea">{totalRevenue} SUI</p>
+                <p className="text-2xl font-bold text-sea">
+                  {totalRevenue} SUI
+                </p>
               </div>
               <DollarSign className="h-8 w-8 text-sea" />
             </div>
@@ -225,7 +247,7 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
 
       {/* Events List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {events.map((event) => (
+        {events.map(event => (
           <Card
             key={event.id}
             className="bg-ocean text-cloud border-sea overflow-hidden hover:shadow-2xl hover:shadow-sea/30 hover:border-aqua hover:border-2 transition-all duration-300 cursor-pointer group hover:bg-ocean/80"
@@ -234,7 +256,10 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
             {event.imageUrl ? (
               <div className="relative w-full h-32 overflow-hidden">
                 <Image
-                  src={event.imageUrl || "/placeholder.svg?height=128&width=400&query=event+banner"}
+                  src={
+                    event.imageUrl ||
+                    "/placeholder.svg?height=128&width=400&query=event+banner"
+                  }
                   alt={event.name}
                   fill
                   className="object-cover transition-all duration-500 group-hover:brightness-110 group-hover:contrast-110"
@@ -266,7 +291,13 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
                   {event.name}
                 </CardTitle>
                 <Badge
-                  variant={event.status === "upcoming" ? "default" : event.status === "past" ? "secondary" : "outline"}
+                  variant={
+                    event.status === "upcoming"
+                      ? "default"
+                      : event.status === "past"
+                        ? "secondary"
+                        : "outline"
+                  }
                   className={
                     event.status === "upcoming"
                       ? "bg-green-600 text-white"
@@ -294,13 +325,17 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-aqua group-hover:text-cloud transition-colors duration-300">Ticket Price</p>
+                  <p className="text-aqua group-hover:text-cloud transition-colors duration-300">
+                    Ticket Price
+                  </p>
                   <p className="text-cloud font-semibold group-hover:text-sea transition-colors duration-300">
                     {event.ticketPrice} SUI
                   </p>
                 </div>
                 <div>
-                  <p className="text-aqua group-hover:text-cloud transition-colors duration-300">Revenue</p>
+                  <p className="text-aqua group-hover:text-cloud transition-colors duration-300">
+                    Revenue
+                  </p>
                   <p className="text-cloud font-semibold group-hover:text-sea transition-colors duration-300">
                     {event.totalRevenue} SUI
                   </p>
@@ -309,7 +344,9 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-aqua group-hover:text-cloud transition-colors duration-300">Tickets Sold</span>
+                  <span className="text-aqua group-hover:text-cloud transition-colors duration-300">
+                    Tickets Sold
+                  </span>
                   <span className="text-cloud group-hover:text-sea transition-colors duration-300">
                     {event.soldTickets}/{event.totalTickets}
                   </span>
@@ -317,7 +354,9 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
                 <div className="w-full bg-deep-ocean rounded-full h-2">
                   <div
                     className="bg-sea h-2 rounded-full transition-all duration-300 group-hover:bg-aqua"
-                    style={{ width: `${(event.soldTickets / event.totalTickets) * 100}%` }}
+                    style={{
+                      width: `${(event.soldTickets / event.totalTickets) * 100}%`,
+                    }}
                   ></div>
                 </div>
               </div>

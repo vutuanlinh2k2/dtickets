@@ -3,7 +3,13 @@
 import { useState, useMemo } from "react"
 import EventCard from "./event-card"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Search } from "lucide-react"
 
 export interface Event {
@@ -96,23 +102,31 @@ const mockEvents: Event[] = [
   },
 ]
 
-export default function EventList({ initialEvents = mockEvents, isWalletConnected, walletAddress }: EventListProps) {
+export default function EventList({
+  initialEvents = mockEvents,
+  isWalletConnected,
+  walletAddress,
+}: EventListProps) {
   const [events, setEvents] = useState<Event[]>(initialEvents)
   const [searchTerm, setSearchTerm] = useState("")
-  const [dateFilter, setDateFilter] = useState<"all" | "upcoming" | "past">("all")
+  const [dateFilter, setDateFilter] = useState<"all" | "upcoming" | "past">(
+    "all"
+  )
   const [priceFilter, setPriceFilter] = useState<string>("all")
 
   const handleBuyTicket = async (
     eventId: string,
-    recipients: string[],
+    recipients: string[]
   ): Promise<"success" | "failed" | "no_tickets"> => {
-    console.log(`Attempting to buy ${recipients.length} tickets for event: ${eventId}`)
+    console.log(
+      `Attempting to buy ${recipients.length} tickets for event: ${eventId}`
+    )
     console.log("Recipients:", recipients)
 
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await new Promise(resolve => setTimeout(resolve, 2000))
 
-    const eventToUpdate = events.find((e) => e.id === eventId)
+    const eventToUpdate = events.find(e => e.id === eventId)
     if (!eventToUpdate || eventToUpdate.remainingTickets < recipients.length) {
       return "no_tickets"
     }
@@ -120,10 +134,18 @@ export default function EventList({ initialEvents = mockEvents, isWalletConnecte
     // Simulate success/failure
     const success = Math.random() > 0.2 // 80% success rate
     if (success) {
-      setEvents((prevEvents) =>
-        prevEvents.map((e) =>
-          e.id === eventId ? { ...e, remainingTickets: Math.max(0, e.remainingTickets - recipients.length) } : e,
-        ),
+      setEvents(prevEvents =>
+        prevEvents.map(e =>
+          e.id === eventId
+            ? {
+                ...e,
+                remainingTickets: Math.max(
+                  0,
+                  e.remainingTickets - recipients.length
+                ),
+              }
+            : e
+        )
       )
       return "success"
     } else {
@@ -137,16 +159,18 @@ export default function EventList({ initialEvents = mockEvents, isWalletConnecte
 
     // Date filter
     if (dateFilter === "upcoming") {
-      tempEvents = tempEvents.filter((event) => event.dateTime >= now)
+      tempEvents = tempEvents.filter(event => event.dateTime >= now)
     } else if (dateFilter === "past") {
-      tempEvents = tempEvents.filter((event) => event.dateTime < now)
+      tempEvents = tempEvents.filter(event => event.dateTime < now)
     }
 
     // Price filter
     if (priceFilter !== "all") {
-      tempEvents = tempEvents.filter((event) => {
-        if (priceFilter === "0-10") return event.ticketPrice > 0 && event.ticketPrice <= 10
-        if (priceFilter === "10-50") return event.ticketPrice > 10 && event.ticketPrice <= 50
+      tempEvents = tempEvents.filter(event => {
+        if (priceFilter === "0-10")
+          return event.ticketPrice > 0 && event.ticketPrice <= 10
+        if (priceFilter === "10-50")
+          return event.ticketPrice > 10 && event.ticketPrice <= 50
         if (priceFilter === "50+") return event.ticketPrice > 50
         return true
       })
@@ -156,10 +180,10 @@ export default function EventList({ initialEvents = mockEvents, isWalletConnecte
     if (searchTerm) {
       const lowerSearchTerm = searchTerm.toLowerCase()
       tempEvents = tempEvents.filter(
-        (event) =>
+        event =>
           event.name.toLowerCase().includes(lowerSearchTerm) ||
           event.venueName.toLowerCase().includes(lowerSearchTerm) ||
-          event.shortDescription.toLowerCase().includes(lowerSearchTerm),
+          event.shortDescription.toLowerCase().includes(lowerSearchTerm)
       )
     }
 
@@ -175,42 +199,71 @@ export default function EventList({ initialEvents = mockEvents, isWalletConnecte
             type="search"
             placeholder="Search events by name, venue, or description..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
             className="pl-10 bg-ocean border-sea text-cloud focus:ring-sea w-full"
           />
         </div>
         <div className="flex gap-4">
-          <Select value={dateFilter} onValueChange={(value: "all" | "upcoming" | "past") => setDateFilter(value)}>
+          <Select
+            value={dateFilter}
+            onValueChange={(value: "all" | "upcoming" | "past") =>
+              setDateFilter(value)
+            }
+          >
             <SelectTrigger className="w-full md:w-[180px] bg-ocean border-sea text-cloud focus:ring-sea">
               <SelectValue placeholder="Filter by date" />
             </SelectTrigger>
             <SelectContent className="bg-ocean text-cloud border-sea">
-              <SelectItem value="all" className="hover:bg-sea hover:text-deep-ocean">
+              <SelectItem
+                value="all"
+                className="hover:bg-sea hover:text-deep-ocean"
+              >
                 All Dates
               </SelectItem>
-              <SelectItem value="upcoming" className="hover:bg-sea hover:text-deep-ocean">
+              <SelectItem
+                value="upcoming"
+                className="hover:bg-sea hover:text-deep-ocean"
+              >
                 Upcoming
               </SelectItem>
-              <SelectItem value="past" className="hover:bg-sea hover:text-deep-ocean">
+              <SelectItem
+                value="past"
+                className="hover:bg-sea hover:text-deep-ocean"
+              >
                 Past
               </SelectItem>
             </SelectContent>
           </Select>
-          <Select value={priceFilter} onValueChange={(value) => setPriceFilter(value)}>
+          <Select
+            value={priceFilter}
+            onValueChange={value => setPriceFilter(value)}
+          >
             <SelectTrigger className="w-full md:w-[180px] bg-ocean border-sea text-cloud focus:ring-sea">
               <SelectValue placeholder="Filter by price" />
             </SelectTrigger>
             <SelectContent className="bg-ocean text-cloud border-sea">
-              <SelectItem value="all" className="hover:bg-sea hover:text-deep-ocean">
+              <SelectItem
+                value="all"
+                className="hover:bg-sea hover:text-deep-ocean"
+              >
                 All Prices
               </SelectItem>
-              <SelectItem value="0-10" className="hover:bg-sea hover:text-deep-ocean">
+              <SelectItem
+                value="0-10"
+                className="hover:bg-sea hover:text-deep-ocean"
+              >
                 1-10 SUI
               </SelectItem>
-              <SelectItem value="10-50" className="hover:bg-sea hover:text-deep-ocean">
+              <SelectItem
+                value="10-50"
+                className="hover:bg-sea hover:text-deep-ocean"
+              >
                 10-50 SUI
               </SelectItem>
-              <SelectItem value="50+" className="hover:bg-sea hover:text-deep-ocean">
+              <SelectItem
+                value="50+"
+                className="hover:bg-sea hover:text-deep-ocean"
+              >
                 50+ SUI
               </SelectItem>
             </SelectContent>
@@ -220,7 +273,7 @@ export default function EventList({ initialEvents = mockEvents, isWalletConnecte
 
       {filteredEvents.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEvents.map((event) => (
+          {filteredEvents.map(event => (
             <EventCard
               key={event.id}
               event={event}
@@ -231,7 +284,9 @@ export default function EventList({ initialEvents = mockEvents, isWalletConnecte
           ))}
         </div>
       ) : (
-        <p className="text-center text-aqua text-lg py-10">No events match your criteria.</p>
+        <p className="text-center text-aqua text-lg py-10">
+          No events match your criteria.
+        </p>
       )}
     </div>
   )
