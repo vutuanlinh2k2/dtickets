@@ -236,7 +236,7 @@ export default function MyEventsList() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card className="bg-ocean border-sea hover:shadow-xl hover:shadow-sea/20 hover:border-aqua hover:border-2 transition-all duration-300 cursor-pointer hover:bg-ocean/80">
+        <Card className="bg-ocean border-sea hover:shadow-xl hover:shadow-sea/20 hover:border-aqua  transition-all duration-300 cursor-pointer hover:bg-ocean/80">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -250,7 +250,7 @@ export default function MyEventsList() {
           </CardContent>
         </Card>
 
-        <Card className="bg-ocean border-sea hover:shadow-xl hover:shadow-sea/20 hover:border-aqua hover:border-2 transition-all duration-300 cursor-pointer hover:bg-ocean/80">
+        <Card className="bg-ocean border-sea hover:shadow-xl hover:shadow-sea/20 hover:border-aqua  transition-all duration-300 cursor-pointer hover:bg-ocean/80">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -262,7 +262,7 @@ export default function MyEventsList() {
           </CardContent>
         </Card>
 
-        <Card className="bg-ocean border-sea hover:shadow-xl hover:shadow-sea/20 hover:border-aqua hover:border-2 transition-all duration-300 cursor-pointer hover:bg-ocean/80">
+        <Card className="bg-ocean border-sea hover:shadow-xl hover:shadow-sea/20 hover:border-aqua  transition-all duration-300 cursor-pointer hover:bg-ocean/80">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -274,7 +274,7 @@ export default function MyEventsList() {
           </CardContent>
         </Card>
 
-        <Card className="bg-ocean border-sea hover:shadow-xl hover:shadow-sea/20 hover:border-aqua hover:border-2 transition-all duration-300 cursor-pointer hover:bg-ocean/80">
+        <Card className="bg-ocean border-sea hover:shadow-xl hover:shadow-sea/20 hover:border-aqua  transition-all duration-300 cursor-pointer hover:bg-ocean/80">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -292,7 +292,7 @@ export default function MyEventsList() {
         {events.map((event) => (
           <Card
             key={event.id}
-            className="bg-ocean text-cloud border-sea overflow-hidden hover:shadow-2xl hover:shadow-sea/30 hover:border-aqua hover:border-2 transition-all duration-300 cursor-pointer group hover:bg-ocean/80"
+            className="bg-ocean text-cloud border-sea overflow-hidden hover:shadow-2xl hover:shadow-sea/30 hover:border-aqua  transition-all duration-300 cursor-pointer group hover:bg-ocean/80"
           >
             {/* Event Image or Background */}
             {event.imageUrl ? (

@@ -126,7 +126,7 @@ export default function EventCard({
 
   return (
     <>
-      <Card className="bg-ocean text-cloud border-sea flex flex-col h-full overflow-hidden hover:shadow-2xl hover:shadow-sea/30 hover:border-aqua hover:border-2 transition-all duration-300 cursor-pointer group hover:bg-ocean/80">
+      <Card className="bg-ocean text-cloud border-sea flex flex-col h-full overflow-hidden hover:shadow-2xl hover:shadow-sea/30 hover:border-aqua transition-all duration-300 cursor-pointer group hover:bg-ocean/80">
         {/* Event Image or Background */}
         {event.imageUrl && !imageError ? (
           <div className="relative w-full h-48 overflow-hidden">

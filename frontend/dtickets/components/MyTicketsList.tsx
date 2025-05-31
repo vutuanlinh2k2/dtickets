@@ -179,7 +179,7 @@ export default function MyTicketsList() {
         {tickets.map((ticket) => (
           <Card
             key={ticket.id}
-            className="bg-ocean text-cloud border-sea overflow-hidden hover:shadow-2xl hover:shadow-sea/30 hover:border-aqua hover:border-2 transition-all duration-300 cursor-pointer group hover:bg-ocean/80"
+            className="bg-ocean text-cloud border-sea overflow-hidden hover:shadow-2xl hover:shadow-sea/30 hover:border-aqua  transition-all duration-300 cursor-pointer group hover:bg-ocean/80"
           >
             {/* Event Image or Background */}
             {ticket.imageUrl ? (
