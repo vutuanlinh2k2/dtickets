@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { formatUnixTimestamp } from "@/lib/utils";
 import Image from "next/image";
-import { useCurrentAccount } from "@mysten/dapp-kit";
+import { useCurrentAccount, useCurrentWallet } from "@mysten/dapp-kit";
 
 interface OwnedTicket {
   id: string;
@@ -121,6 +121,7 @@ const fetchMockUserTickets = async (
 };
 
 export default function MyTicketsList() {
+  const { isConnecting } = useCurrentWallet();
   const account = useCurrentAccount();
   const walletAddress = account?.address;
 
@@ -138,7 +139,7 @@ export default function MyTicketsList() {
     }
   }, [walletAddress]);
 
-  if (!walletAddress) {
+  if (!isConnecting && !walletAddress) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-aqua bg-ocean p-6 rounded-lg border border-sea">
         <AlertTriangle className="h-12 w-12 text-sea mb-4" />

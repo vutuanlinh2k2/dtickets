@@ -14,7 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { EventCreationData } from "@/types";
 import { SUI_DECIMALS } from "@mysten/sui/utils";
@@ -63,7 +62,6 @@ export default function CreateEventModal({
   const [ticketPriceString, setTicketPriceString] = useState("");
   const [totalTicketsString, setTotalTicketsString] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
@@ -186,12 +184,6 @@ export default function CreateEventModal({
 
     setIsSubmitting(false);
     if (success) {
-      // Show success toast
-      toast({
-        title: "Event Created Successfully!",
-        description: `"${eventCreationData.name}" has been created and is now live.`,
-        variant: "default",
-      });
       // Reset form and close modal immediately
       setEventCreationData({
         name: "",
@@ -216,13 +208,6 @@ export default function CreateEventModal({
       onClose();
     } else {
       setErrors({ general: "Failed to create event. Please try again." });
-      // Show error toast
-      toast({
-        title: "Event Creation Failed",
-        description:
-          "There was an error creating your event. Please try again.",
-        variant: "destructive",
-      });
     }
   };
 

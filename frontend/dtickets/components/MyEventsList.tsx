@@ -18,25 +18,24 @@ import {
 import { formatDateString } from "@/lib/utils";
 import CreateEventModal from "./CreateEventModal";
 import Image from "next/image";
-import { useCurrentAccount } from "@mysten/dapp-kit";
+import { useCurrentAccount, useCurrentWallet } from "@mysten/dapp-kit";
 import type { EventCreationData, Event } from "../types";
 import { useCreateEventMutation } from "../mutations/createEvent";
 import { formatSuiAmount } from "../lib/formatSuiAmount";
 import { BigNumber } from "bignumber.js";
 import { QueryKey } from "../constants";
+import { useToast } from "@/hooks/use-toast";
 
 export default function MyEventsList() {
   const account = useCurrentAccount();
   const walletAddress = account?.address;
+  const { toast } = useToast();
   const { mutate: createEvent } = useCreateEventMutation();
+  const { isConnecting } = useCurrentWallet();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const {
-    data: events,
-    isLoading,
-    refetch,
-  } = useQuery<Event[]>({
+  const { data: events, isLoading } = useQuery<Event[]>({
     queryKey: [QueryKey.MyEvents],
     queryFn: async () => {
       const data = await fetch(
@@ -53,16 +52,30 @@ export default function MyEventsList() {
     console.log("Creating event:", eventData);
     return new Promise((resolve) => {
       createEvent(eventData, {
-        onSuccess: () => {
-          refetch();
+        onSuccess: async () => {
+          toast({
+            title: "Event Created Successfully!",
+            description: `"${eventData.name}" has been created and is now live.`,
+            variant: "default",
+          });
+          setIsCreateModalOpen(false);
           resolve(true);
         },
-        onError: () => resolve(false),
+        onError: (error) => {
+          console.error("Failed to create event:", error);
+          toast({
+            title: "Failed to Create Event",
+            description:
+              "Something went wrong while creating your event. Please try again.",
+            variant: "destructive",
+          });
+          resolve(false);
+        },
       });
     });
   };
 
-  if (!walletAddress) {
+  if (!isConnecting && !walletAddress) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-aqua bg-ocean p-6 rounded-lg border border-sea">
         <AlertTriangle className="h-12 w-12 text-sea mb-4" />
