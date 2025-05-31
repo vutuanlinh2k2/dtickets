@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,133 +9,54 @@ import {
   MapPin,
   Loader2,
 } from "lucide-react";
-import { formatUnixTimestamp } from "@/lib/utils";
 import Image from "next/image";
 import { useCurrentAccount, useCurrentWallet } from "@mysten/dapp-kit";
+import { useQuery } from "@tanstack/react-query";
+import { QueryKey } from "../constants";
+import { formatDateString } from "@/lib/utils";
 
-interface OwnedTicket {
+interface Ticket {
   id: string;
   eventId: string;
   eventName: string;
-  eventDate: number;
-  venueName: string;
-  ticketNumber: string; // Or NFT ID
-  purchaseDate: number;
-  status: "upcoming" | "ongoing" | "past";
+  eventStartTime: string;
+  eventEndTime: string;
+  venue: string;
+  ticketNumber: string;
+  purchaseTime: string;
   imageUrl?: string; // Add optional image URL
 }
-
-// Mock function to fetch tickets for a wallet
-const fetchMockUserTickets = async (
-  address: string | null
-): Promise<OwnedTicket[]> => {
-  if (!address) return [];
-  await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate API delay
-
-  const now = Math.floor(Date.now() / 1000);
-  const eventDuration = 86400 * 2; // Assume events last 2 days
-
-  // Helper function to determine event status
-  const getEventStatus = (
-    eventDate: number
-  ): "upcoming" | "ongoing" | "past" => {
-    if (eventDate > now) return "upcoming";
-    if (eventDate <= now && now < eventDate + eventDuration) return "ongoing";
-    return "past";
-  };
-
-  // In a real app, this would be an API call to fetch NFTs
-  const events = [
-    {
-      id: "ticket1",
-      eventId: "1",
-      eventName: "Sui Blockchain Summit",
-      eventDate: now + 86400 * 7, // 7 days from now
-      venueName: "Crypto Convention Center",
-      ticketNumber: "NFT#00123",
-      purchaseDate: now - 86400 * 2, // 2 days ago
-      imageUrl:
-        "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=200&fit=crop",
-    },
-    {
-      id: "ticket2",
-      eventId: "3",
-      eventName: "Decentralized Music Fest",
-      eventDate: now + 86400 * 30, // 30 days from now
-      venueName: "Open Air Amphitheater",
-      ticketNumber: "NFT#00456",
-      purchaseDate: now - 86400 * 5, // 5 days ago
-      imageUrl:
-        "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=200&fit=crop",
-    },
-    {
-      id: "ticket3",
-      eventId: "past1",
-      eventName: "DeFi Workshop",
-      eventDate: now - 86400 * 10, // 10 days ago
-      venueName: "Innovation Hub",
-      ticketNumber: "NFT#00789",
-      purchaseDate: now - 86400 * 15, // 15 days ago
-      // No image for this event
-    },
-    {
-      id: "ticket4",
-      eventId: "past2",
-      eventName: "NFT Art Exhibition",
-      eventDate: now - 86400 * 3, // 3 days ago
-      venueName: "Digital Gallery",
-      ticketNumber: "NFT#00321",
-      purchaseDate: now - 86400 * 8, // 8 days ago
-      imageUrl:
-        "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=200&fit=crop",
-    },
-    {
-      id: "ticket5",
-      eventId: "6",
-      eventName: "Community Meetup: Web3 Future",
-      eventDate: now + 86400 * 10, // 10 days from now
-      venueName: "Local Co-working Space",
-      ticketNumber: "NFT#00654",
-      purchaseDate: now - 86400 * 1, // 1 day ago
-      // No image for this event
-    },
-    {
-      id: "ticket6",
-      eventId: "ongoing1",
-      eventName: "Web3 Gaming Conference",
-      eventDate: now - 86400 * 0.5, // Started 12 hours ago (ongoing)
-      venueName: "Tech Arena",
-      ticketNumber: "NFT#00999",
-      purchaseDate: now - 86400 * 3, // 3 days ago
-      imageUrl:
-        "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=200&fit=crop",
-    },
-  ];
-
-  return events.map((event) => ({
-    ...event,
-    status: getEventStatus(event.eventDate),
-  }));
-};
 
 export default function MyTicketsList() {
   const { isConnecting } = useCurrentWallet();
   const account = useCurrentAccount();
   const walletAddress = account?.address;
 
-  const [tickets, setTickets] = useState<OwnedTicket[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { data, isLoading } = useQuery({
+    queryKey: [QueryKey.MyTickets],
+    queryFn: async () => {
+      const data = await fetch(
+        `http://localhost:3001/api/tickets/owner/${walletAddress}`
+      );
+      return data.json();
+    },
+    enabled: !!walletAddress,
+  });
 
-  useEffect(() => {
-    if (walletAddress) {
-      setIsLoading(true);
-      fetchMockUserTickets(walletAddress)
-        .then(setTickets)
-        .finally(() => setIsLoading(false));
-    } else {
-      setTickets([]); // Clear tickets if wallet disconnects
-    }
-  }, [walletAddress]);
+  console.log("data :", data);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tickets: Ticket[] = (data ?? []).map((ticket: any) => ({
+    id: ticket.id,
+    eventId: ticket.eventId,
+    eventName: ticket.event.name,
+    eventStartTime: ticket.event.startTime,
+    eventEndTime: ticket.event.endTime,
+    venue: ticket.event.venue,
+    ticketNumber: ticket.ticketNumber,
+    purchaseTime: ticket.createdAt,
+    imageUrl: ticket.event.imageUrl,
+  }));
 
   if (!isConnecting && !walletAddress) {
     return (
@@ -218,23 +138,23 @@ export default function MyTicketsList() {
                 </CardTitle>
                 <Badge
                   variant={
-                    ticket.status === "upcoming"
+                    getEventStatus(ticket.eventStartTime, ticket.eventEndTime) === "upcoming"
                       ? "default"
-                      : ticket.status === "ongoing"
+                      : getEventStatus(ticket.eventStartTime, ticket.eventEndTime) === "ongoing"
                         ? "secondary"
                         : "destructive"
                   }
                   className={
-                    ticket.status === "upcoming"
+                    getEventStatus(ticket.eventStartTime, ticket.eventEndTime) === "upcoming"
                       ? "bg-green-600 text-white"
-                      : ticket.status === "ongoing"
+                      : getEventStatus(ticket.eventStartTime, ticket.eventEndTime) === "ongoing"
                         ? "bg-yellow-600 text-white"
                         : "bg-gray-600 text-white"
                   }
                 >
-                  {ticket.status === "upcoming"
+                  {getEventStatus(ticket.eventStartTime, ticket.eventEndTime) === "upcoming"
                     ? "Upcoming"
-                    : ticket.status === "ongoing"
+                    : getEventStatus(ticket.eventStartTime, ticket.eventEndTime) === "ongoing"
                       ? "Ongoing"
                       : "Past"}
                 </Badge>
@@ -243,11 +163,12 @@ export default function MyTicketsList() {
             <CardContent className="space-y-3">
               <div className="flex items-center text-aqua text-sm group-hover:text-cloud transition-colors duration-300">
                 <CalendarDays className="mr-2 h-4 w-4" />
-                {formatUnixTimestamp(ticket.eventDate)}
+                {formatDateString(ticket.eventStartTime)} -{" "}
+                {formatDateString(ticket.eventEndTime)}
               </div>
               <div className="flex items-center text-aqua text-sm group-hover:text-cloud transition-colors duration-300">
                 <MapPin className="mr-2 h-4 w-4" />
-                {ticket.venueName}
+                {ticket.venue}
               </div>
               <div className="space-y-1">
                 <p className="text-aqua text-sm group-hover:text-cloud transition-colors duration-300">
@@ -262,7 +183,7 @@ export default function MyTicketsList() {
                   Purchased:
                 </p>
                 <p className="text-cloud text-sm group-hover:text-sea transition-colors duration-300">
-                  {formatUnixTimestamp(ticket.purchaseDate)}
+                  {formatDateString(ticket.purchaseTime)}
                 </p>
               </div>
             </CardContent>
@@ -272,3 +193,16 @@ export default function MyTicketsList() {
     </div>
   );
 }
+
+const getEventStatus = (
+  startTime: string,
+  endTime: string
+): "upcoming" | "ongoing" | "past" => {
+  const now = new Date();
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+
+  if (now < start) return "upcoming";
+  if (now >= start && now <= end) return "ongoing";
+  return "past";
+};
