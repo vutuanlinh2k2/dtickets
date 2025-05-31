@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// Cursor model for blockchain indexing
+model Cursor {
+  id       String @id
+  eventSeq String
+  txDigest String
+}
+
+// Event model representing events from the smart contract
+model Event {
+  id             String   @id // Sui object ID
+  name           String
+  description    String
+  venue          String
+  organizer      String   // Sui address
+  imgUrl         String
+  startTime      DateTime
+  endTime        DateTime
+  ticketPrice    String   // Stored as string to handle large numbers (MIST)
+  totalTickets   Int
+  ticketsSold    Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // Relations
+  tickets        Ticket[]
+  
+  @@map("events")
+}
+
+// Ticket model representing ticket NFTs
+model Ticket {
+  id           String @id // Sui object ID
+  eventId      String // References Event.id
+  ticketNumber Int
+  owner        String // Current owner address
+  createdAt    DateTime @default(now())
+  
+  // Relations
+  event        Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  @@map("tickets")
+  @@unique([eventId, ticketNumber])
+}
+
