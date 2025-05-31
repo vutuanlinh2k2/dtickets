@@ -1,27 +1,32 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
-import EventCard from "./EventCard"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search } from "lucide-react"
+import { useState, useMemo } from "react";
+import EventCard from "./EventCard";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search } from "lucide-react";
+import { useCurrentAccount } from "@mysten/dapp-kit";
 
 export interface Event {
-  id: string
-  name: string
-  dateTime: number // Unix timestamp
-  venueName: string
-  ticketPrice: number // in SUI (cannot be 0)
-  shortDescription: string
-  remainingTickets: number
-  totalTickets: number
-  imageUrl?: string // Optional event image
+  id: string;
+  name: string;
+  dateTime: number; // Unix timestamp
+  venueName: string;
+  ticketPrice: number; // in SUI (cannot be 0)
+  shortDescription: string;
+  remainingTickets: number;
+  totalTickets: number;
+  imageUrl?: string; // Optional event image
 }
 
 interface EventListProps {
-  initialEvents?: Event[]
-  isWalletConnected: boolean
-  walletAddress: string | null
+  initialEvents?: Event[];
 }
 
 // Mock initial events data
@@ -36,7 +41,8 @@ const mockEvents: Event[] = [
       "Join us for an immersive deep dive into the Sui ecosystem, featuring keynote speakers, hands-on workshops, networking opportunities, and exclusive insights into the future of decentralized applications on the Sui blockchain. This is a must-attend event for developers, investors, and enthusiasts alike who are keen to explore the cutting-edge technology and potential of Sui. We will cover topics ranging from Move programming to DeFi, NFTs, and gaming.",
     remainingTickets: 87,
     totalTickets: 200,
-    // imageUrl: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=200&fit=crop",
+    imageUrl:
+      "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=200&fit=crop",
   },
   {
     id: "2",
@@ -47,7 +53,8 @@ const mockEvents: Event[] = [
     shortDescription: "Exclusive showcase of NFT artworks.",
     remainingTickets: 30,
     totalTickets: 50,
-    // imageUrl: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=200&fit=crop",
+    imageUrl:
+      "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=200&fit=crop",
   },
   {
     id: "3",
@@ -58,7 +65,8 @@ const mockEvents: Event[] = [
     shortDescription: "Live music powered by blockchain.",
     remainingTickets: 150,
     totalTickets: 500,
-    // imageUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=200&fit=crop",
+    imageUrl:
+      "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=200&fit=crop",
   },
   {
     id: "4",
@@ -80,7 +88,8 @@ const mockEvents: Event[] = [
     shortDescription: "Explore the future of gaming.",
     remainingTickets: 200,
     totalTickets: 300,
-    // imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=200&fit=crop",
+    imageUrl:
+      "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=200&fit=crop",
   },
   {
     id: "6",
@@ -94,77 +103,129 @@ const mockEvents: Event[] = [
     totalTickets: 50,
     // No image for this event - will show background pattern
   },
-]
+  {
+    id: "7",
+    name: "DeFi Yield Farming Workshop",
+    dateTime: Math.floor(Date.now() / 1000) - 86400 * 0.5, // Started 12 hours ago (ongoing)
+    venueName: "Blockchain Academy",
+    ticketPrice: 30,
+    shortDescription:
+      "Learn advanced yield farming strategies and protocols. Hands-on workshop with live trading demos.",
+    remainingTickets: 8,
+    totalTickets: 40,
+    imageUrl:
+      "https://images.unsplash.com/photo-1559081842-5024d0b8c56e?w=400&h=200&fit=crop",
+  },
+  {
+    id: "8",
+    name: "Move Smart Contract Bootcamp",
+    dateTime: Math.floor(Date.now() / 1000) - 86400 * 1, // Started 1 day ago (ongoing)
+    venueName: "Code Academy",
+    ticketPrice: 45,
+    shortDescription:
+      "Intensive 3-day bootcamp covering Move programming language for Sui blockchain development.",
+    remainingTickets: 12,
+    totalTickets: 25,
+    imageUrl:
+      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=200&fit=crop",
+  },
+];
 
-export default function EventList({ initialEvents = mockEvents, isWalletConnected, walletAddress }: EventListProps) {
-  const [events, setEvents] = useState<Event[]>(initialEvents)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [dateFilter, setDateFilter] = useState<"all" | "upcoming" | "past">("all")
-  const [priceFilter, setPriceFilter] = useState<string>("all")
+export default function EventList({
+  initialEvents = mockEvents,
+}: EventListProps) {
+  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateFilter, setDateFilter] = useState<
+    "all" | "upcoming" | "past" | "ongoing"
+  >("all");
+  const [priceFilter, setPriceFilter] = useState<string>("all");
+  const account = useCurrentAccount();
+  const isWalletConnected = !!account;
+  const walletAddress = account?.address;
 
   const handleBuyTicket = async (
     eventId: string,
-    recipients: string[],
+    recipients: string[]
   ): Promise<"success" | "failed" | "no_tickets"> => {
-    console.log(`Attempting to buy ${recipients.length} tickets for event: ${eventId}`)
-    console.log("Recipients:", recipients)
+    console.log(
+      `Attempting to buy ${recipients.length} tickets for event: ${eventId}`
+    );
+    console.log("Recipients:", recipients);
 
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    const eventToUpdate = events.find((e) => e.id === eventId)
+    const eventToUpdate = events.find((e) => e.id === eventId);
     if (!eventToUpdate || eventToUpdate.remainingTickets < recipients.length) {
-      return "no_tickets"
+      return "no_tickets";
     }
 
     // Simulate success/failure
-    const success = Math.random() > 0.2 // 80% success rate
+    const success = Math.random() > 0.2; // 80% success rate
     if (success) {
       setEvents((prevEvents) =>
         prevEvents.map((e) =>
-          e.id === eventId ? { ...e, remainingTickets: Math.max(0, e.remainingTickets - recipients.length) } : e,
-        ),
-      )
-      return "success"
+          e.id === eventId
+            ? {
+                ...e,
+                remainingTickets: Math.max(
+                  0,
+                  e.remainingTickets - recipients.length
+                ),
+              }
+            : e
+        )
+      );
+      return "success";
     } else {
-      return "failed"
+      return "failed";
     }
-  }
+  };
 
   const filteredEvents = useMemo(() => {
-    let tempEvents = [...events]
-    const now = Math.floor(Date.now() / 1000)
+    let tempEvents = [...events];
+    const now = Math.floor(Date.now() / 1000);
+    const eventDuration = 86400 * 2; // Assume events last 2 days (same as EventCard)
 
     // Date filter
     if (dateFilter === "upcoming") {
-      tempEvents = tempEvents.filter((event) => event.dateTime >= now)
+      tempEvents = tempEvents.filter((event) => event.dateTime > now);
     } else if (dateFilter === "past") {
-      tempEvents = tempEvents.filter((event) => event.dateTime < now)
+      tempEvents = tempEvents.filter(
+        (event) => event.dateTime + eventDuration < now
+      );
+    } else if (dateFilter === "ongoing") {
+      tempEvents = tempEvents.filter(
+        (event) => event.dateTime <= now && now < event.dateTime + eventDuration
+      );
     }
 
     // Price filter
     if (priceFilter !== "all") {
       tempEvents = tempEvents.filter((event) => {
-        if (priceFilter === "0-10") return event.ticketPrice > 0 && event.ticketPrice <= 10
-        if (priceFilter === "10-50") return event.ticketPrice > 10 && event.ticketPrice <= 50
-        if (priceFilter === "50+") return event.ticketPrice > 50
-        return true
-      })
+        if (priceFilter === "0-10")
+          return event.ticketPrice > 0 && event.ticketPrice <= 10;
+        if (priceFilter === "10-50")
+          return event.ticketPrice > 10 && event.ticketPrice <= 50;
+        if (priceFilter === "50+") return event.ticketPrice > 50;
+        return true;
+      });
     }
 
     // Search filter
     if (searchTerm) {
-      const lowerSearchTerm = searchTerm.toLowerCase()
+      const lowerSearchTerm = searchTerm.toLowerCase();
       tempEvents = tempEvents.filter(
         (event) =>
           event.name.toLowerCase().includes(lowerSearchTerm) ||
           event.venueName.toLowerCase().includes(lowerSearchTerm) ||
-          event.shortDescription.toLowerCase().includes(lowerSearchTerm),
-      )
+          event.shortDescription.toLowerCase().includes(lowerSearchTerm)
+      );
     }
 
-    return tempEvents
-  }, [events, searchTerm, dateFilter, priceFilter])
+    return tempEvents;
+  }, [events, searchTerm, dateFilter, priceFilter]);
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -180,37 +241,72 @@ export default function EventList({ initialEvents = mockEvents, isWalletConnecte
           />
         </div>
         <div className="flex gap-4">
-          <Select value={dateFilter} onValueChange={(value: "all" | "upcoming" | "past") => setDateFilter(value)}>
+          <Select
+            value={dateFilter}
+            onValueChange={(value: "all" | "upcoming" | "past" | "ongoing") =>
+              setDateFilter(value)
+            }
+          >
             <SelectTrigger className="w-full md:w-[180px] bg-ocean border-sea text-cloud focus:ring-sea hover:border-aqua hover:shadow-md hover:shadow-sea/20 transition-all duration-300">
               <SelectValue placeholder="Filter by date" />
             </SelectTrigger>
             <SelectContent className="bg-ocean text-cloud border-sea">
-              <SelectItem value="all" className="hover:bg-sea hover:text-deep-ocean">
+              <SelectItem
+                value="all"
+                className="hover:bg-sea hover:text-deep-ocean"
+              >
                 All Dates
               </SelectItem>
-              <SelectItem value="upcoming" className="hover:bg-sea hover:text-deep-ocean">
+              <SelectItem
+                value="upcoming"
+                className="hover:bg-sea hover:text-deep-ocean"
+              >
                 Upcoming
               </SelectItem>
-              <SelectItem value="past" className="hover:bg-sea hover:text-deep-ocean">
+              <SelectItem
+                value="past"
+                className="hover:bg-sea hover:text-deep-ocean"
+              >
                 Past
+              </SelectItem>
+              <SelectItem
+                value="ongoing"
+                className="hover:bg-sea hover:text-deep-ocean"
+              >
+                Ongoing
               </SelectItem>
             </SelectContent>
           </Select>
-          <Select value={priceFilter} onValueChange={(value) => setPriceFilter(value)}>
+          <Select
+            value={priceFilter}
+            onValueChange={(value) => setPriceFilter(value)}
+          >
             <SelectTrigger className="w-full md:w-[180px] bg-ocean border-sea text-cloud focus:ring-sea hover:border-aqua hover:shadow-md hover:shadow-sea/20 transition-all duration-300">
               <SelectValue placeholder="Filter by price" />
             </SelectTrigger>
             <SelectContent className="bg-ocean text-cloud border-sea">
-              <SelectItem value="all" className="hover:bg-sea hover:text-deep-ocean">
+              <SelectItem
+                value="all"
+                className="hover:bg-sea hover:text-deep-ocean"
+              >
                 All Prices
               </SelectItem>
-              <SelectItem value="0-10" className="hover:bg-sea hover:text-deep-ocean">
+              <SelectItem
+                value="0-10"
+                className="hover:bg-sea hover:text-deep-ocean"
+              >
                 1-10 SUI
               </SelectItem>
-              <SelectItem value="10-50" className="hover:bg-sea hover:text-deep-ocean">
+              <SelectItem
+                value="10-50"
+                className="hover:bg-sea hover:text-deep-ocean"
+              >
                 10-50 SUI
               </SelectItem>
-              <SelectItem value="50+" className="hover:bg-sea hover:text-deep-ocean">
+              <SelectItem
+                value="50+"
+                className="hover:bg-sea hover:text-deep-ocean"
+              >
                 50+ SUI
               </SelectItem>
             </SelectContent>
@@ -225,14 +321,16 @@ export default function EventList({ initialEvents = mockEvents, isWalletConnecte
               key={event.id}
               event={event}
               isWalletConnected={isWalletConnected}
-              walletAddress={walletAddress}
+              walletAddress={walletAddress ?? null}
               onBuyTicket={handleBuyTicket}
             />
           ))}
         </div>
       ) : (
-        <p className="text-center text-aqua text-lg py-10">No events match your criteria.</p>
+        <p className="text-center text-aqua text-lg py-10">
+          No events match your criteria.
+        </p>
       )}
     </div>
-  )
+  );
 }

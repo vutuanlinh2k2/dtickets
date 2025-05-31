@@ -1,10 +1,10 @@
 import type React from "react";
 import type { Metadata } from "next";
 import "./globals.css"; // Should be app/globals.css
-import { AppStateProvider } from "@/components/AppStateProvider";
+import "@mysten/dapp-kit/dist/index.css";
 import HeaderClient from "@/components/HeaderClient";
 import { Toaster } from "@/components/ui/toaster";
-import { Providers } from "@/components/Providers";
+import { Providers } from "@/app/Providers";
 
 export const metadata: Metadata = {
   title: "DTickets",
@@ -24,15 +24,13 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         <Providers>
-          <AppStateProvider>
-            <HeaderClient />
-            <main className="flex-grow container mx-auto py-8">{children}</main>
-            <footer className="bg-ocean border-t border-sea p-4 text-center text-aqua text-sm">
-              © {new Date().getFullYear()} SuiTicketing Platform. All rights
-              reserved.
-            </footer>
-            <Toaster />
-          </AppStateProvider>
+          <HeaderClient />
+          <main className="flex-grow container mx-auto py-8">{children}</main>
+          <footer className="bg-ocean border-t border-sea p-4 text-center text-aqua text-sm">
+            © {new Date().getFullYear()} SuiTicketing Platform. All rights
+            reserved.
+          </footer>
+          <Toaster />
         </Providers>
       </body>
     </html>

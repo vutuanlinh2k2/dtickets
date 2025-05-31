@@ -1,38 +1,53 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { TicketIcon, AlertTriangle, CalendarDays, MapPin, Loader2 } from "lucide-react"
-import { formatUnixTimestamp } from "@/lib/utils"
-import Image from "next/image"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  TicketIcon,
+  AlertTriangle,
+  CalendarDays,
+  MapPin,
+  Loader2,
+} from "lucide-react";
+import { formatUnixTimestamp } from "@/lib/utils";
+import Image from "next/image";
+import { useCurrentAccount } from "@mysten/dapp-kit";
 
 interface OwnedTicket {
-  id: string
-  eventId: string
-  eventName: string
-  eventDate: number
-  venueName: string
-  ticketNumber: string // Or NFT ID
-  purchaseDate: number
-  status: "upcoming" | "past"
-  imageUrl?: string // Add optional image URL
-}
-
-interface MyTicketsListProps {
-  walletAddress: string | null // Pass null if not connected
+  id: string;
+  eventId: string;
+  eventName: string;
+  eventDate: number;
+  venueName: string;
+  ticketNumber: string; // Or NFT ID
+  purchaseDate: number;
+  status: "upcoming" | "ongoing" | "past";
+  imageUrl?: string; // Add optional image URL
 }
 
 // Mock function to fetch tickets for a wallet
-const fetchMockUserTickets = async (address: string | null): Promise<OwnedTicket[]> => {
-  if (!address) return []
-  console.log(`Fetching tickets for ${address}...`)
-  await new Promise((resolve) => setTimeout(resolve, 1500)) // Simulate API delay
+const fetchMockUserTickets = async (
+  address: string | null
+): Promise<OwnedTicket[]> => {
+  if (!address) return [];
+  console.log(`Fetching tickets for ${address}...`);
+  await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate API delay
 
-  const now = Math.floor(Date.now() / 1000)
+  const now = Math.floor(Date.now() / 1000);
+  const eventDuration = 86400 * 2; // Assume events last 2 days
+
+  // Helper function to determine event status
+  const getEventStatus = (
+    eventDate: number
+  ): "upcoming" | "ongoing" | "past" => {
+    if (eventDate > now) return "upcoming";
+    if (eventDate <= now && now < eventDate + eventDuration) return "ongoing";
+    return "past";
+  };
 
   // In a real app, this would be an API call to fetch NFTs
-  return [
+  const events = [
     {
       id: "ticket1",
       eventId: "1",
@@ -41,8 +56,8 @@ const fetchMockUserTickets = async (address: string | null): Promise<OwnedTicket
       venueName: "Crypto Convention Center",
       ticketNumber: "NFT#00123",
       purchaseDate: now - 86400 * 2, // 2 days ago
-      status: "upcoming",
-      imageUrl: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=200&fit=crop",
+      imageUrl:
+        "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=200&fit=crop",
     },
     {
       id: "ticket2",
@@ -52,8 +67,8 @@ const fetchMockUserTickets = async (address: string | null): Promise<OwnedTicket
       venueName: "Open Air Amphitheater",
       ticketNumber: "NFT#00456",
       purchaseDate: now - 86400 * 5, // 5 days ago
-      status: "upcoming",
-      imageUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=200&fit=crop",
+      imageUrl:
+        "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=200&fit=crop",
     },
     {
       id: "ticket3",
@@ -63,7 +78,6 @@ const fetchMockUserTickets = async (address: string | null): Promise<OwnedTicket
       venueName: "Innovation Hub",
       ticketNumber: "NFT#00789",
       purchaseDate: now - 86400 * 15, // 15 days ago
-      status: "past",
       // No image for this event
     },
     {
@@ -74,8 +88,8 @@ const fetchMockUserTickets = async (address: string | null): Promise<OwnedTicket
       venueName: "Digital Gallery",
       ticketNumber: "NFT#00321",
       purchaseDate: now - 86400 * 8, // 8 days ago
-      status: "past",
-      imageUrl: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=200&fit=crop",
+      imageUrl:
+        "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=200&fit=crop",
     },
     {
       id: "ticket5",
@@ -85,26 +99,44 @@ const fetchMockUserTickets = async (address: string | null): Promise<OwnedTicket
       venueName: "Local Co-working Space",
       ticketNumber: "NFT#00654",
       purchaseDate: now - 86400 * 1, // 1 day ago
-      status: "upcoming",
       // No image for this event
     },
-  ]
-}
+    {
+      id: "ticket6",
+      eventId: "ongoing1",
+      eventName: "Web3 Gaming Conference",
+      eventDate: now - 86400 * 0.5, // Started 12 hours ago (ongoing)
+      venueName: "Tech Arena",
+      ticketNumber: "NFT#00999",
+      purchaseDate: now - 86400 * 3, // 3 days ago
+      imageUrl:
+        "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=200&fit=crop",
+    },
+  ];
 
-export default function MyTicketsList({ walletAddress }: MyTicketsListProps) {
-  const [tickets, setTickets] = useState<OwnedTicket[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  return events.map((event) => ({
+    ...event,
+    status: getEventStatus(event.eventDate),
+  }));
+};
+
+export default function MyTicketsList() {
+  const account = useCurrentAccount();
+  const walletAddress = account?.address;
+
+  const [tickets, setTickets] = useState<OwnedTicket[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (walletAddress) {
-      setIsLoading(true)
+      setIsLoading(true);
       fetchMockUserTickets(walletAddress)
         .then(setTickets)
-        .finally(() => setIsLoading(false))
+        .finally(() => setIsLoading(false));
     } else {
-      setTickets([]) // Clear tickets if wallet disconnects
+      setTickets([]); // Clear tickets if wallet disconnects
     }
-  }, [walletAddress])
+  }, [walletAddress]);
 
   if (!walletAddress) {
     return (
@@ -113,7 +145,7 @@ export default function MyTicketsList({ walletAddress }: MyTicketsListProps) {
         <h2 className="text-xl font-semibold mb-2">Wallet Not Connected</h2>
         <p>Please connect your wallet to view your tickets.</p>
       </div>
-    )
+    );
   }
 
   if (isLoading) {
@@ -123,7 +155,7 @@ export default function MyTicketsList({ walletAddress }: MyTicketsListProps) {
         <h2 className="text-xl font-semibold mb-2">Loading Your Tickets</h2>
         <p>Fetching your ticket collection...</p>
       </div>
-    )
+    );
   }
 
   if (tickets.length === 0) {
@@ -131,9 +163,12 @@ export default function MyTicketsList({ walletAddress }: MyTicketsListProps) {
       <div className="flex flex-col items-center justify-center h-64 text-aqua">
         <TicketIcon className="h-12 w-12 text-sea mb-4" />
         <h2 className="text-xl font-semibold mb-2">No Tickets Found</h2>
-        <p>You don't own any tickets yet. Start by purchasing tickets to upcoming events!</p>
+        <p>
+          You don&apos;t own any tickets yet. Start by purchasing tickets to
+          upcoming events!
+        </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -182,10 +217,26 @@ export default function MyTicketsList({ walletAddress }: MyTicketsListProps) {
                   {ticket.eventName}
                 </CardTitle>
                 <Badge
-                  variant={ticket.status === "upcoming" ? "default" : "secondary"}
-                  className={ticket.status === "upcoming" ? "bg-green-600 text-white" : "bg-gray-600 text-white"}
+                  variant={
+                    ticket.status === "upcoming"
+                      ? "default"
+                      : ticket.status === "ongoing"
+                        ? "secondary"
+                        : "destructive"
+                  }
+                  className={
+                    ticket.status === "upcoming"
+                      ? "bg-green-600 text-white"
+                      : ticket.status === "ongoing"
+                        ? "bg-yellow-600 text-white"
+                        : "bg-gray-600 text-white"
+                  }
                 >
-                  {ticket.status === "upcoming" ? "Upcoming" : "Past"}
+                  {ticket.status === "upcoming"
+                    ? "Upcoming"
+                    : ticket.status === "ongoing"
+                      ? "Ongoing"
+                      : "Past"}
                 </Badge>
               </div>
             </CardHeader>
@@ -199,13 +250,17 @@ export default function MyTicketsList({ walletAddress }: MyTicketsListProps) {
                 {ticket.venueName}
               </div>
               <div className="space-y-1">
-                <p className="text-aqua text-sm group-hover:text-cloud transition-colors duration-300">Ticket ID:</p>
+                <p className="text-aqua text-sm group-hover:text-cloud transition-colors duration-300">
+                  Ticket ID:
+                </p>
                 <p className="text-cloud font-mono text-sm group-hover:text-sea transition-colors duration-300">
                   {ticket.ticketNumber}
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-aqua text-sm group-hover:text-cloud transition-colors duration-300">Purchased:</p>
+                <p className="text-aqua text-sm group-hover:text-cloud transition-colors duration-300">
+                  Purchased:
+                </p>
                 <p className="text-cloud text-sm group-hover:text-sea transition-colors duration-300">
                   {formatUnixTimestamp(ticket.purchaseDate)}
                 </p>
@@ -215,5 +270,5 @@ export default function MyTicketsList({ walletAddress }: MyTicketsListProps) {
         ))}
       </div>
     </div>
-  )
+  );
 }

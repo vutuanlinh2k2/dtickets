@@ -25,6 +25,7 @@ import type { Event } from "./EventList";
 import BuyTicketModal from "./BuyTicketModal";
 import ProcessingOverlay from "./ProcessingOverlay";
 import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
 
 interface EventCardProps {
   event: Event;
@@ -54,18 +55,33 @@ export default function EventCard({
   const [displayedDate, setDisplayedDate] = useState<string | null>(null);
   const [clientDeterminedIsPastEvent, setClientDeterminedIsPastEvent] =
     useState(false);
+  const [clientDeterminedIsOngoingEvent, setClientDeterminedIsOngoingEvent] =
+    useState(false);
   const [isClientMounted, setIsClientMounted] = useState(false);
 
   useEffect(() => {
     setDisplayedDate(formatUnixTimestamp(event.dateTime));
-    setClientDeterminedIsPastEvent(
-      event.dateTime < Math.floor(Date.now() / 1000)
+    const now = Math.floor(Date.now() / 1000);
+    const eventDuration = 86400 * 2; // Assume events last 2 days
+
+    setClientDeterminedIsPastEvent(event.dateTime + eventDuration < now);
+    setClientDeterminedIsOngoingEvent(
+      event.dateTime <= now && now < event.dateTime + eventDuration
     );
     setIsClientMounted(true);
   }, [event.dateTime]);
 
-  // Use clientDeterminedIsPastEvent only when client is mounted
-  const isPastEvent = isClientMounted ? clientDeterminedIsPastEvent : false; // Default to not past for SSR/initial render consistency
+  // Use client-determined status only when client is mounted
+  const isPastEvent = isClientMounted ? clientDeterminedIsPastEvent : false;
+  const isOngoingEvent = isClientMounted
+    ? clientDeterminedIsOngoingEvent
+    : false;
+
+  const getEventStatus = (): "upcoming" | "ongoing" | "past" => {
+    if (isPastEvent) return "past";
+    if (isOngoingEvent) return "ongoing";
+    return "upcoming";
+  };
 
   const handleBuyTicketClick = () => {
     if (!isWalletConnected) {
@@ -154,9 +170,30 @@ export default function EventCard({
         )}
 
         <CardHeader>
-          <CardTitle className="text-sea text-xl group-hover:text-aqua transition-colors duration-300">
-            {event.name}
-          </CardTitle>
+          <div className="flex justify-between items-start">
+            <CardTitle className="text-sea text-xl group-hover:text-aqua transition-colors duration-300">
+              {event.name}
+            </CardTitle>
+            <Badge
+              variant={
+                getEventStatus() === "upcoming"
+                  ? "default"
+                  : getEventStatus() === "ongoing"
+                    ? "secondary"
+                    : "destructive"
+              }
+              className={
+                getEventStatus() === "past"
+                  ? "bg-gray-600 text-white"
+                  : getEventStatus() === "ongoing"
+                    ? "bg-yellow-600 text-white"
+                    : "bg-green-600 text-white"
+              }
+            >
+              {getEventStatus().charAt(0).toUpperCase() +
+                getEventStatus().slice(1)}
+            </Badge>
+          </div>
           <CardDescription className="text-aqua flex items-center group-hover:text-cloud transition-colors duration-300">
             <CalendarDays className="mr-2 h-4 w-4" />{" "}
             {displayedDate || "Loading date..."}
@@ -207,15 +244,17 @@ export default function EventCard({
                 !canBuy ||
                 purchaseStatus === "processing" ||
                 !isWalletConnected ||
-                isPastEvent
+                getEventStatus() === "past"
               }
             >
               <Ticket className="mr-2 h-4 w-4" />
               {isWalletConnected
-                ? isPastEvent
+                ? getEventStatus() === "past"
                   ? "Event Passed"
                   : canBuy
-                    ? "Buy Ticket"
+                    ? getEventStatus() === "ongoing"
+                      ? "Buy Ticket (Live)"
+                      : "Buy Ticket"
                     : "Sold Out"
                 : "Connect Wallet to Buy"}
             </Button>

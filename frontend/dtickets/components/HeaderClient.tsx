@@ -1,34 +1,12 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { LogIn, LogOut, Wallet, Users, Calendar, Ticket } from "lucide-react"
-import { useAppState } from "@/components/AppStateProvider"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu"
+import Link from "next/link";
+import { Users, Calendar, Ticket } from "lucide-react";
+import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
 
 export default function HeaderClient() {
-  const { isWalletConnected, walletAddress, connectWallet, disconnectWallet } = useAppState()
-
-  const handleConnect = () => {
-    // Simulate wallet connection
-    const mockAddress = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`
-    connectWallet(mockAddress)
-  }
-
-  const handleDisconnect = () => {
-    disconnectWallet()
-  }
-
-  const truncatedAddress = walletAddress
-    ? `${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`
-    : ""
+  const account = useCurrentAccount();
+  console.log('account :', account);
 
   return (
     <header className="bg-ocean border-b border-sea p-4">
@@ -63,49 +41,10 @@ export default function HeaderClient() {
           </Link>
 
           {/* Wallet Connection */}
-          {isWalletConnected ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="bg-ocean text-aqua border-sea hover:bg-sea hover:text-deep-ocean hover:border-aqua transition-all duration-300"
-                >
-                  <Wallet className="mr-2 h-4 w-4" />
-                  {truncatedAddress}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-ocean text-aqua border-sea">
-                <DropdownMenuLabel className="text-aqua">Account</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-sea" />
-                <DropdownMenuItem className="cursor-pointer hover:bg-sea hover:text-deep-ocean">
-                  <Users className="mr-2 h-4 w-4" />
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer hover:bg-sea hover:text-deep-ocean">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-sea" />
-                <DropdownMenuItem
-                  onClick={handleDisconnect}
-                  className="cursor-pointer hover:bg-sea hover:text-deep-ocean"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Disconnect
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button
-              onClick={handleConnect}
-              className="bg-sea text-deep-ocean hover:bg-aqua hover:text-ocean transition-all duration-300"
-            >
-              <LogIn className="mr-2 h-4 w-4" />
-              Connect Wallet
-            </Button>
-          )}
+          {/* TODO: update styling */}
+          <ConnectButton />
         </nav>
       </div>
     </header>
-  )
+  );
 }

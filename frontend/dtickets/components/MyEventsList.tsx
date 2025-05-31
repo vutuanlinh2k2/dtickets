@@ -1,42 +1,60 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { CalendarDays, MapPin, DollarSign, AlertTriangle, Plus, Loader2, Clock, Ticket } from "lucide-react"
-import { formatUnixTimestamp } from "@/lib/utils"
-import CreateEventModal from "./CreateEventModal"
-import Image from "next/image"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  CalendarDays,
+  MapPin,
+  DollarSign,
+  AlertTriangle,
+  Plus,
+  Loader2,
+  Clock,
+  Ticket,
+} from "lucide-react";
+import { formatUnixTimestamp } from "@/lib/utils";
+import CreateEventModal from "./CreateEventModal";
+import Image from "next/image";
+import { useCurrentAccount } from "@mysten/dapp-kit";
 
 interface CreatedEvent {
-  id: string
-  name: string
-  dateTime: number
-  venueName: string
-  ticketPrice: number
-  shortDescription: string
-  totalTickets: number
-  soldTickets: number
-  remainingTickets: number
-  totalRevenue: number
-  status: "upcoming" | "ongoing" | "past"
-  imageUrl?: string // Optional event image
-}
-
-interface MyEventsListProps {
-  walletAddress: string | null
+  id: string;
+  name: string;
+  dateTime: number;
+  venueName: string;
+  ticketPrice: number;
+  shortDescription: string;
+  totalTickets: number;
+  soldTickets: number;
+  remainingTickets: number;
+  totalRevenue: number;
+  status: "upcoming" | "ongoing" | "past";
+  imageUrl?: string; // Optional event image
 }
 
 // Mock function to fetch events created by the user
-const fetchMockCreatedEvents = async (address: string | null): Promise<CreatedEvent[]> => {
-  if (!address) return []
-  console.log(`Fetching created events for ${address}...`)
-  await new Promise((resolve) => setTimeout(resolve, 1500))
+const fetchMockCreatedEvents = async (
+  address: string | null
+): Promise<CreatedEvent[]> => {
+  if (!address) return [];
+  console.log(`Fetching created events for ${address}...`);
+  await new Promise((resolve) => setTimeout(resolve, 1500));
 
-  const now = Math.floor(Date.now() / 1000)
+  const now = Math.floor(Date.now() / 1000);
+  const eventDuration = 86400 * 2; // Assume events last 2 days
 
-  return [
+  // Helper function to determine event status
+  const getEventStatus = (
+    eventDate: number
+  ): "upcoming" | "ongoing" | "past" => {
+    if (eventDate > now) return "upcoming";
+    if (eventDate <= now && now < eventDate + eventDuration) return "ongoing";
+    return "past";
+  };
+
+  const events = [
     {
       id: "created1",
       name: "Sui Blockchain Summit",
@@ -48,8 +66,8 @@ const fetchMockCreatedEvents = async (address: string | null): Promise<CreatedEv
       soldTickets: 113,
       remainingTickets: 87,
       totalRevenue: 113 * 25, // 2825 SUI
-      status: "upcoming",
-      imageUrl: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=200&fit=crop",
+      imageUrl:
+        "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=200&fit=crop",
     },
     {
       id: "created2",
@@ -62,13 +80,13 @@ const fetchMockCreatedEvents = async (address: string | null): Promise<CreatedEv
       soldTickets: 45,
       remainingTickets: 5,
       totalRevenue: 45 * 15, // 675 SUI
-      status: "upcoming",
-      imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=200&fit=crop",
+      imageUrl:
+        "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=200&fit=crop",
     },
     {
       id: "created3",
       name: "DeFi Masterclass",
-      dateTime: now - 86400 * 3, // 3 days ago (past event)
+      dateTime: now - 86400 * 5, // 5 days ago (past event)
       venueName: "Financial District Center",
       ticketPrice: 30,
       shortDescription: "Advanced DeFi strategies and protocols.",
@@ -76,7 +94,6 @@ const fetchMockCreatedEvents = async (address: string | null): Promise<CreatedEv
       soldTickets: 100,
       remainingTickets: 0,
       totalRevenue: 100 * 30, // 3000 SUI
-      status: "past",
       // No image for this event - will show background pattern
     },
     {
@@ -84,47 +101,70 @@ const fetchMockCreatedEvents = async (address: string | null): Promise<CreatedEv
       name: "Community Meetup",
       dateTime: now + 86400 * 14, // 14 days from now
       venueName: "Local Co-working Space",
-      ticketPrice: 5, // Changed from 0 to 5
+      ticketPrice: 5,
       shortDescription: "Monthly community gathering.",
       totalTickets: 30,
       soldTickets: 18,
       remainingTickets: 12,
       totalRevenue: 18 * 5, // 90 SUI
-      status: "upcoming",
       // No image for this event - will show background pattern
     },
-  ]
-}
+    {
+      id: "created5",
+      name: "NFT Marketplace Launch",
+      dateTime: now - 86400 * 0.5, // Started 12 hours ago (ongoing)
+      venueName: "Digital Hub",
+      ticketPrice: 20,
+      shortDescription: "Launch event for the new NFT marketplace.",
+      totalTickets: 75,
+      soldTickets: 60,
+      remainingTickets: 15,
+      totalRevenue: 60 * 20, // 1200 SUI
+      imageUrl:
+        "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=200&fit=crop",
+    },
+  ];
 
-export default function MyEventsList({ walletAddress }: MyEventsListProps) {
-  const [events, setEvents] = useState<CreatedEvent[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  return events.map((event) => ({
+    ...event,
+    status: getEventStatus(event.dateTime),
+  }));
+};
+
+export default function MyEventsList() {
+  const account = useCurrentAccount();
+  const walletAddress = account?.address;
+
+  const [events, setEvents] = useState<CreatedEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     if (walletAddress) {
-      setIsLoading(true)
+      setIsLoading(true);
       fetchMockCreatedEvents(walletAddress)
         .then(setEvents)
-        .finally(() => setIsLoading(false))
+        .finally(() => setIsLoading(false));
     } else {
-      setEvents([])
+      setEvents([]);
     }
-  }, [walletAddress])
+  }, [walletAddress]);
 
-  const handleCreateEvent = async (eventData: any): Promise<boolean> => {
-    console.log("Creating new event:", eventData)
+  const handleCreateEvent = async (
+    eventData: Record<string, unknown>
+  ): Promise<boolean> => {
+    console.log("Creating new event:", eventData);
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Simulate success and refresh events list
-    const success = Math.random() > 0.2 // 80% success rate
+    const success = Math.random() > 0.2; // 80% success rate
     if (success && walletAddress) {
       // Refresh the events list
-      fetchMockCreatedEvents(walletAddress).then(setEvents)
+      fetchMockCreatedEvents(walletAddress).then(setEvents);
     }
-    return success
-  }
+    return success;
+  };
 
   if (!walletAddress) {
     return (
@@ -133,7 +173,7 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
         <h2 className="text-xl font-semibold mb-2">Wallet Not Connected</h2>
         <p>Please connect your wallet to view your created events.</p>
       </div>
-    )
+    );
   }
 
   if (isLoading) {
@@ -143,14 +183,16 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
         <h2 className="text-xl font-semibold mb-2">Loading Your Events</h2>
         <p>Fetching your created events...</p>
       </div>
-    )
+    );
   }
 
   if (events.length === 0) {
     return (
       <div className="text-center py-10">
         <CalendarDays className="h-12 w-12 text-sea mx-auto mb-4" />
-        <p className="text-aqua text-lg mb-4">You haven't created any events yet.</p>
+        <p className="text-aqua text-lg mb-4">
+          You haven&apos;t created any events yet.
+        </p>
         <Button
           className="bg-sea text-deep-ocean hover:bg-aqua hover:text-ocean transition-all duration-300"
           onClick={() => setIsCreateModalOpen(true)}
@@ -164,12 +206,20 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
           onCreateEvent={handleCreateEvent}
         />
       </div>
-    )
+    );
   }
 
-  const totalRevenue = events.reduce((sum, event) => sum + event.totalRevenue, 0)
-  const upcomingEvents = events.filter((event) => event.status === "upcoming").length
-  const pastEvents = events.filter((event) => event.status === "past").length
+  const totalRevenue = events.reduce(
+    (sum, event) => sum + event.totalRevenue,
+    0
+  );
+  const upcomingEvents = events.filter(
+    (event) => event.status === "upcoming"
+  ).length;
+  const ongoingEvents = events.filter(
+    (event) => event.status === "ongoing"
+  ).length;
+  const pastEvents = events.filter((event) => event.status === "past").length;
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -185,13 +235,15 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card className="bg-ocean border-sea hover:shadow-xl hover:shadow-sea/20 hover:border-aqua hover:border-2 transition-all duration-300 cursor-pointer hover:bg-ocean/80">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-aqua text-sm">Total Revenue</p>
-                <p className="text-2xl font-bold text-sea">{totalRevenue} SUI</p>
+                <p className="text-2xl font-bold text-sea">
+                  {totalRevenue} SUI
+                </p>
               </div>
               <DollarSign className="h-8 w-8 text-sea" />
             </div>
@@ -206,6 +258,18 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
                 <p className="text-2xl font-bold text-sea">{upcomingEvents}</p>
               </div>
               <CalendarDays className="h-8 w-8 text-sea" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-ocean border-sea hover:shadow-xl hover:shadow-sea/20 hover:border-aqua hover:border-2 transition-all duration-300 cursor-pointer hover:bg-ocean/80">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-aqua text-sm">Ongoing Events</p>
+                <p className="text-2xl font-bold text-sea">{ongoingEvents}</p>
+              </div>
+              <Clock className="h-8 w-8 text-sea" />
             </div>
           </CardContent>
         </Card>
@@ -234,7 +298,10 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
             {event.imageUrl ? (
               <div className="relative w-full h-32 overflow-hidden">
                 <Image
-                  src={event.imageUrl || "/placeholder.svg?height=128&width=400&query=event+banner"}
+                  src={
+                    event.imageUrl ||
+                    "/placeholder.svg?height=128&width=400&query=event+banner"
+                  }
                   alt={event.name}
                   fill
                   className="object-cover transition-all duration-500 group-hover:brightness-110 group-hover:contrast-110"
@@ -266,13 +333,19 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
                   {event.name}
                 </CardTitle>
                 <Badge
-                  variant={event.status === "upcoming" ? "default" : event.status === "past" ? "secondary" : "outline"}
+                  variant={
+                    event.status === "upcoming"
+                      ? "default"
+                      : event.status === "past"
+                        ? "secondary"
+                        : "outline"
+                  }
                   className={
                     event.status === "upcoming"
                       ? "bg-green-600 text-white"
                       : event.status === "past"
                         ? "bg-gray-600 text-white"
-                        : "bg-blue-600 text-white"
+                        : "bg-yellow-600 text-white"
                   }
                 >
                   {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
@@ -294,13 +367,17 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-aqua group-hover:text-cloud transition-colors duration-300">Ticket Price</p>
+                  <p className="text-aqua group-hover:text-cloud transition-colors duration-300">
+                    Ticket Price
+                  </p>
                   <p className="text-cloud font-semibold group-hover:text-sea transition-colors duration-300">
                     {event.ticketPrice} SUI
                   </p>
                 </div>
                 <div>
-                  <p className="text-aqua group-hover:text-cloud transition-colors duration-300">Revenue</p>
+                  <p className="text-aqua group-hover:text-cloud transition-colors duration-300">
+                    Revenue
+                  </p>
                   <p className="text-cloud font-semibold group-hover:text-sea transition-colors duration-300">
                     {event.totalRevenue} SUI
                   </p>
@@ -309,7 +386,9 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-aqua group-hover:text-cloud transition-colors duration-300">Tickets Sold</span>
+                  <span className="text-aqua group-hover:text-cloud transition-colors duration-300">
+                    Tickets Sold
+                  </span>
                   <span className="text-cloud group-hover:text-sea transition-colors duration-300">
                     {event.soldTickets}/{event.totalTickets}
                   </span>
@@ -317,7 +396,9 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
                 <div className="w-full bg-deep-ocean rounded-full h-2">
                   <div
                     className="bg-sea h-2 rounded-full transition-all duration-300 group-hover:bg-aqua"
-                    style={{ width: `${(event.soldTickets / event.totalTickets) * 100}%` }}
+                    style={{
+                      width: `${(event.soldTickets / event.totalTickets) * 100}%`,
+                    }}
                   ></div>
                 </div>
               </div>
@@ -332,5 +413,5 @@ export default function MyEventsList({ walletAddress }: MyEventsListProps) {
         onCreateEvent={handleCreateEvent}
       />
     </div>
-  )
+  );
 }
