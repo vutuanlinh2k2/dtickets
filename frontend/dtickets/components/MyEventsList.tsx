@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,156 +15,42 @@ import {
   Clock,
   Ticket,
 } from "lucide-react";
-import { formatUnixTimestamp } from "@/lib/utils";
+import { formatDateString } from "@/lib/utils";
 import CreateEventModal from "./CreateEventModal";
 import Image from "next/image";
 import { useCurrentAccount } from "@mysten/dapp-kit";
-
-interface CreatedEvent {
-  id: string;
-  name: string;
-  dateTime: number;
-  venueName: string;
-  ticketPrice: number;
-  shortDescription: string;
-  totalTickets: number;
-  soldTickets: number;
-  remainingTickets: number;
-  totalRevenue: number;
-  status: "upcoming" | "ongoing" | "past";
-  imageUrl?: string; // Optional event image
-}
-
-// Mock function to fetch events created by the user
-const fetchMockCreatedEvents = async (
-  address: string | null
-): Promise<CreatedEvent[]> => {
-  if (!address) return [];
-  console.log(`Fetching created events for ${address}...`);
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  const now = Math.floor(Date.now() / 1000);
-  const eventDuration = 86400 * 2; // Assume events last 2 days
-
-  // Helper function to determine event status
-  const getEventStatus = (
-    eventDate: number
-  ): "upcoming" | "ongoing" | "past" => {
-    if (eventDate > now) return "upcoming";
-    if (eventDate <= now && now < eventDate + eventDuration) return "ongoing";
-    return "past";
-  };
-
-  const events = [
-    {
-      id: "created1",
-      name: "Sui Blockchain Summit",
-      dateTime: now + 86400 * 7, // 7 days from now
-      venueName: "Crypto Convention Center",
-      ticketPrice: 25,
-      shortDescription: "Deep dive into the Sui ecosystem.",
-      totalTickets: 200,
-      soldTickets: 113,
-      remainingTickets: 87,
-      totalRevenue: 113 * 25, // 2825 SUI
-      imageUrl:
-        "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=200&fit=crop",
-    },
-    {
-      id: "created2",
-      name: "Web3 Gaming Workshop",
-      dateTime: now + 86400 * 2, // 2 days from now
-      venueName: "Innovation Hub",
-      ticketPrice: 15,
-      shortDescription: "Hands-on workshop for Web3 game development.",
-      totalTickets: 50,
-      soldTickets: 45,
-      remainingTickets: 5,
-      totalRevenue: 45 * 15, // 675 SUI
-      imageUrl:
-        "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=200&fit=crop",
-    },
-    {
-      id: "created3",
-      name: "DeFi Masterclass",
-      dateTime: now - 86400 * 5, // 5 days ago (past event)
-      venueName: "Financial District Center",
-      ticketPrice: 30,
-      shortDescription: "Advanced DeFi strategies and protocols.",
-      totalTickets: 100,
-      soldTickets: 100,
-      remainingTickets: 0,
-      totalRevenue: 100 * 30, // 3000 SUI
-      // No image for this event - will show background pattern
-    },
-    {
-      id: "created4",
-      name: "Community Meetup",
-      dateTime: now + 86400 * 14, // 14 days from now
-      venueName: "Local Co-working Space",
-      ticketPrice: 5,
-      shortDescription: "Monthly community gathering.",
-      totalTickets: 30,
-      soldTickets: 18,
-      remainingTickets: 12,
-      totalRevenue: 18 * 5, // 90 SUI
-      // No image for this event - will show background pattern
-    },
-    {
-      id: "created5",
-      name: "NFT Marketplace Launch",
-      dateTime: now - 86400 * 0.5, // Started 12 hours ago (ongoing)
-      venueName: "Digital Hub",
-      ticketPrice: 20,
-      shortDescription: "Launch event for the new NFT marketplace.",
-      totalTickets: 75,
-      soldTickets: 60,
-      remainingTickets: 15,
-      totalRevenue: 60 * 20, // 1200 SUI
-      imageUrl:
-        "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=200&fit=crop",
-    },
-  ];
-
-  return events.map((event) => ({
-    ...event,
-    status: getEventStatus(event.dateTime),
-  }));
-};
+import type { EventCreationData, Event } from "../types";
+import { useCreateEventMutation } from "../mutations/createEvent";
+import { formatSuiAmount } from "../utils/formatSuiAmount";
+import { BigNumber } from "bignumber.js";
 
 export default function MyEventsList() {
   const account = useCurrentAccount();
   const walletAddress = account?.address;
+  const { mutate: createEvent } = useCreateEventMutation();
 
-  const [events, setEvents] = useState<CreatedEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (walletAddress) {
-      setIsLoading(true);
-      fetchMockCreatedEvents(walletAddress)
-        .then(setEvents)
-        .finally(() => setIsLoading(false));
-    } else {
-      setEvents([]);
-    }
-  }, [walletAddress]);
+  const { data: events, isLoading } = useQuery<Event[]>({
+    queryKey: ["events created by user"],
+    queryFn: async () => {
+      const data = await fetch(
+        `http://localhost:3001/api/events/organizer/${walletAddress}`
+      );
+      return data.json();
+    },
+    enabled: !!walletAddress,
+  });
 
   const handleCreateEvent = async (
-    eventData: Record<string, unknown>
+    eventData: EventCreationData
   ): Promise<boolean> => {
-    console.log("Creating new event:", eventData);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Simulate success and refresh events list
-    const success = Math.random() > 0.2; // 80% success rate
-    if (success && walletAddress) {
-      // Refresh the events list
-      fetchMockCreatedEvents(walletAddress).then(setEvents);
-    }
-    return success;
+    return new Promise((resolve) => {
+      createEvent(eventData, {
+        onSuccess: () => resolve(true),
+        onError: () => resolve(false),
+      });
+    });
   };
 
   if (!walletAddress) {
@@ -186,7 +73,7 @@ export default function MyEventsList() {
     );
   }
 
-  if (events.length === 0) {
+  if (events && events.length === 0) {
     return (
       <div className="text-center py-10">
         <CalendarDays className="h-12 w-12 text-sea mx-auto mb-4" />
@@ -203,23 +90,27 @@ export default function MyEventsList() {
         <CreateEventModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          onCreateEvent={handleCreateEvent}
+          onCreateEvent={handleCreateEvent} // TODO: fix this
         />
       </div>
     );
   }
 
-  const totalRevenue = events.reduce(
-    (sum, event) => sum + event.totalRevenue,
-    0
+  const totalRevenue = (events ?? []).reduce(
+    (sum, event) =>
+      sum.plus(BigNumber(event.ticketPrice).multipliedBy(event.ticketsSold)),
+    BigNumber(0)
   );
-  const upcomingEvents = events.filter(
-    (event) => event.status === "upcoming"
+
+  const upcomingEvents = (events ?? []).filter(
+    (event) => getEventStatus(event.startTime, event.endTime) === "upcoming"
   ).length;
-  const ongoingEvents = events.filter(
-    (event) => event.status === "ongoing"
+  const ongoingEvents = (events ?? []).filter(
+    (event) => getEventStatus(event.startTime, event.endTime) === "ongoing"
   ).length;
-  const pastEvents = events.filter((event) => event.status === "past").length;
+  const pastEvents = (events ?? []).filter(
+    (event) => getEventStatus(event.startTime, event.endTime) === "past"
+  ).length;
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -242,7 +133,7 @@ export default function MyEventsList() {
               <div>
                 <p className="text-aqua text-sm">Total Revenue</p>
                 <p className="text-2xl font-bold text-sea">
-                  {totalRevenue} SUI
+                  {formatSuiAmount(totalRevenue)} SUI
                 </p>
               </div>
               <DollarSign className="h-8 w-8 text-sea" />
@@ -289,17 +180,17 @@ export default function MyEventsList() {
 
       {/* Events List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {events.map((event) => (
+        {(events ?? []).map((event) => (
           <Card
             key={event.id}
             className="bg-ocean text-cloud border-sea overflow-hidden hover:shadow-2xl hover:shadow-sea/30 hover:border-aqua  transition-all duration-300 cursor-pointer group hover:bg-ocean/80"
           >
             {/* Event Image or Background */}
-            {event.imageUrl ? (
+            {event.imgUrl ? (
               <div className="relative w-full h-32 overflow-hidden">
                 <Image
                   src={
-                    event.imageUrl ||
+                    event.imgUrl ||
                     "/placeholder.svg?height=128&width=400&query=event+banner"
                   }
                   alt={event.name}
@@ -334,35 +225,43 @@ export default function MyEventsList() {
                 </CardTitle>
                 <Badge
                   variant={
-                    event.status === "upcoming"
+                    getEventStatus(event.startTime, event.endTime) ===
+                    "upcoming"
                       ? "default"
-                      : event.status === "past"
+                      : getEventStatus(event.startTime, event.endTime) ===
+                          "past"
                         ? "secondary"
                         : "outline"
                   }
                   className={
-                    event.status === "upcoming"
+                    getEventStatus(event.startTime, event.endTime) ===
+                    "upcoming"
                       ? "bg-green-600 text-white"
-                      : event.status === "past"
+                      : getEventStatus(event.startTime, event.endTime) ===
+                          "past"
                         ? "bg-gray-600 text-white"
                         : "bg-yellow-600 text-white"
                   }
                 >
-                  {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                  {getEventStatus(event.startTime, event.endTime)
+                    .charAt(0)
+                    .toUpperCase() +
+                    getEventStatus(event.startTime, event.endTime).slice(1)}
                 </Badge>
               </div>
               <div className="text-aqua flex items-center text-sm group-hover:text-cloud transition-colors duration-300">
                 <CalendarDays className="mr-2 h-4 w-4" />
-                {formatUnixTimestamp(event.dateTime)}
+                {formatDateString(event.startTime)} -{" "}
+                {formatDateString(event.endTime)}
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center text-aqua text-sm group-hover:text-cloud transition-colors duration-300">
-                <MapPin className="mr-2 h-4 w-4" /> {event.venueName}
+                <MapPin className="mr-2 h-4 w-4" /> {event.venue}
               </div>
 
               <p className="text-sm text-aqua line-clamp-2 group-hover:text-cloud transition-colors duration-300">
-                {event.shortDescription}
+                {event.description}
               </p>
 
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -371,7 +270,7 @@ export default function MyEventsList() {
                     Ticket Price
                   </p>
                   <p className="text-cloud font-semibold group-hover:text-sea transition-colors duration-300">
-                    {event.ticketPrice} SUI
+                    {formatSuiAmount(event.ticketPrice)} SUI
                   </p>
                 </div>
                 <div>
@@ -379,7 +278,12 @@ export default function MyEventsList() {
                     Revenue
                   </p>
                   <p className="text-cloud font-semibold group-hover:text-sea transition-colors duration-300">
-                    {event.totalRevenue} SUI
+                    {formatSuiAmount(
+                      BigNumber(event.ticketPrice).multipliedBy(
+                        event.ticketsSold
+                      )
+                    )}{" "}
+                    SUI
                   </p>
                 </div>
               </div>
@@ -390,14 +294,14 @@ export default function MyEventsList() {
                     Tickets Sold
                   </span>
                   <span className="text-cloud group-hover:text-sea transition-colors duration-300">
-                    {event.soldTickets}/{event.totalTickets}
+                    {event.ticketsSold}/{event.totalTickets}
                   </span>
                 </div>
                 <div className="w-full bg-deep-ocean rounded-full h-2">
                   <div
                     className="bg-sea h-2 rounded-full transition-all duration-300 group-hover:bg-aqua"
                     style={{
-                      width: `${(event.soldTickets / event.totalTickets) * 100}%`,
+                      width: `${(event.ticketsSold / event.totalTickets) * 100}%`,
                     }}
                   ></div>
                 </div>
@@ -415,3 +319,16 @@ export default function MyEventsList() {
     </div>
   );
 }
+
+const getEventStatus = (
+  startTime: string,
+  endTime: string
+): "upcoming" | "ongoing" | "past" => {
+  const now = new Date();
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+
+  if (now < start) return "upcoming";
+  if (now >= start && now <= end) return "ongoing";
+  return "past";
+};

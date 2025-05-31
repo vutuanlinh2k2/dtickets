@@ -77,6 +77,78 @@ export const createEvent = async (params: {
 };
 
 /**
+ * Split a large coin into smaller coins to ensure multiple coin objects for gas and payments
+ */
+export const splitCoinsForUser = async (
+  keypair: Ed25519Keypair,
+  splitAmounts: number[] = [1000000000, 1000000000]
+) => {
+  const client = getClient(CONFIG.NETWORK);
+  const address = keypair.getPublicKey().toSuiAddress();
+
+  console.log(`Splitting coins for user: ${address}`);
+
+  // Get coins
+  const coins = await client.getCoins({
+    owner: address,
+    coinType: "0x2::sui::SUI",
+  });
+
+  if (coins.data.length === 0) {
+    throw new Error("No SUI coins available to split");
+  }
+
+  // Check if we already have multiple coins
+  if (coins.data.length >= 3) {
+    console.log(
+      `User already has ${coins.data.length} coin objects, no splitting needed`
+    );
+    return;
+  }
+
+  const tx = new Transaction();
+
+  // Find the largest coin to use for splitting
+  const largestCoin = coins.data.reduce((prev, current) =>
+    parseInt(current.balance) > parseInt(prev.balance) ? current : prev
+  );
+
+  console.log(
+    `Using largest coin ${largestCoin.coinObjectId} with balance ${largestCoin.balance} MIST for splitting`
+  );
+
+  // Don't manually set gas payment when using the same coin for splitting
+  // Let the SDK handle gas payment automatically from the available coins
+
+  // Split the coin into smaller coins
+  const [coin1, coin2] = tx.splitCoins(tx.object(largestCoin.coinObjectId), [
+    tx.pure.u64(splitAmounts[0]), // 1 SUI
+    tx.pure.u64(splitAmounts[1]), // 1 SUI
+  ]);
+
+  // Transfer the split coins back to the user (this ensures they're not unused)
+  tx.transferObjects([coin1, coin2], tx.pure.address(address));
+
+  try {
+    const result = await client.signAndExecuteTransaction({
+      transaction: tx,
+      signer: keypair,
+      options: {
+        showEffects: true,
+        showObjectChanges: true,
+      },
+    });
+
+    console.log(`Coins split successfully for ${address}`);
+    console.log(`Transaction: ${result.digest}`);
+    return result;
+  } catch (error) {
+    console.error("Error splitting coins:", error);
+    throw error;
+  }
+};
+
+/**
  * Purchase a ticket for an event
  */
 export const purchaseTicket = async (params: {
@@ -104,13 +176,52 @@ export const purchaseTicket = async (params: {
     throw new Error("No SUI coins available for payment");
   }
 
+  console.log(`Found ${coins.data.length} coin objects for payment`);
+
+  // Find a coin with enough balance for the ticket
+  let suitableCoin = null;
+  for (const coin of coins.data) {
+    if (parseInt(coin.balance) >= params.ticketPrice) {
+      suitableCoin = coin;
+      break;
+    }
+  }
+
+  if (!suitableCoin) {
+    throw new Error(
+      `No coin with sufficient balance. Need ${params.ticketPrice} MIST for ticket`
+    );
+  }
+
+  console.log(
+    `Using coin ${suitableCoin.coinObjectId} with balance ${suitableCoin.balance} MIST`
+  );
+
   const tx = new Transaction();
 
-  // Set gas budget
-  tx.setGasBudget(10000000); // 0.01 SUI
+  // Only set gas payment manually if we have multiple coins and can use a different one
+  if (coins.data.length > 1) {
+    const gasCoins = coins.data.filter(
+      (coin) => coin.coinObjectId !== suitableCoin.coinObjectId
+    );
+    if (gasCoins.length > 0) {
+      const gasCoin = gasCoins[0];
+      console.log(
+        `Using separate gas coin: ${gasCoin.coinObjectId} with balance ${gasCoin.balance} MIST`
+      );
+      tx.setGasPayment([
+        {
+          objectId: gasCoin.coinObjectId,
+          version: gasCoin.version,
+          digest: gasCoin.digest,
+        },
+      ]);
+    }
+  }
+  // If we only have one coin or no suitable separate gas coin, let SDK handle gas automatically
 
-  // Split coin for exact payment amount
-  const [paymentCoin] = tx.splitCoins(tx.object(coins.data[0].coinObjectId), [
+  // Split the suitable coin for exact payment amount
+  const [exactPayment] = tx.splitCoins(tx.object(suitableCoin.coinObjectId), [
     tx.pure.u64(params.ticketPrice),
   ]);
 
@@ -118,7 +229,7 @@ export const purchaseTicket = async (params: {
     target: `${CONFIG.DTICKETS_CONTRACT.packageId}::dtickets::purchase_ticket`,
     arguments: [
       tx.object(params.eventObjectId),
-      paymentCoin,
+      exactPayment,
       tx.pure.address(recipientAddress),
     ],
   });

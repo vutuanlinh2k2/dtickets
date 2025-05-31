@@ -1,0 +1,6 @@
+
+> dtickets-api@1.0.0 api:dev
+> npx ts-node server.ts
+
+dTickets API server running on port 3001
+Health check: http://localhost:3001/health

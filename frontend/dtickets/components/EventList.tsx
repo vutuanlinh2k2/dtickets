@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import EventCard from "./EventCard";
 import { Input } from "@/components/ui/input";
@@ -144,6 +145,16 @@ export default function EventList({
   const account = useCurrentAccount();
   const isWalletConnected = !!account;
   const walletAddress = account?.address;
+
+  const { data } = useQuery({
+    queryKey: ["all events"],
+    queryFn: async () => {
+      const data = await fetch("http://localhost:3001/api/events");
+      return data.json();
+    },
+  });
+
+  console.log(data);
 
   const handleBuyTicket = async (
     eventId: string,

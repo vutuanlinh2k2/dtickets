@@ -1,7 +1,6 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import {
   createEvent,
   purchaseTicket,

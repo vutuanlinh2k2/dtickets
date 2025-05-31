@@ -46,6 +46,10 @@
   --color-deep-ocean: #030f1c;
   --color-cloud: #ffffff;
 
+  /* Define actual color variables for muted elements */
+  --muted: 220 14% 11%;
+  --muted-foreground: 220 9% 46%;
+
   /* Border radius */
   --radius-none: 0px;
   --radius-sm: 2px;
