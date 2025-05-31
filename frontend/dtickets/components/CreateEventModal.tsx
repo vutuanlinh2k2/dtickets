@@ -16,38 +16,25 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-
-interface FormData {
-  eventName: string;
-  description: string;
-  venueName: string;
-  eventDateTime: string; // ISO string format from datetime-local
-  ticketPrice: string; // String for input, convert to number
-  totalTicketSupply: string; // String for input, convert to number
-  imageFile: File | null; // Optional image file
-}
+import { EventCreationData } from "@/types";
+import { SUI_DECIMALS } from "@mysten/sui/utils";
 
 interface FormErrors {
-  eventName?: string;
+  name?: string;
   description?: string;
-  venueName?: string;
-  eventDateTime?: string;
+  venue?: string;
+  startTime?: string;
+  endTime?: string;
   ticketPrice?: string;
-  totalTicketSupply?: string;
-  imageFile?: string;
+  totalTickets?: string;
+  imageUrl?: string;
   general?: string;
 }
 
 interface CreateEventModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateEvent?: (
-    eventData: Omit<FormData, "eventDateTime"> & {
-      eventTimestamp: number;
-      ticketPriceNum: number;
-      totalTicketSupplyNum: number;
-    }
-  ) => Promise<boolean>;
+  onCreateEvent?: (eventData: EventCreationData) => Promise<boolean>;
 }
 
 export default function CreateEventModal({
@@ -55,53 +42,70 @@ export default function CreateEventModal({
   onClose,
   onCreateEvent,
 }: CreateEventModalProps) {
-  const [formData, setFormData] = useState<FormData>({
-    eventName: "",
-    description: "",
-    venueName: "",
-    eventDateTime: "",
-    ticketPrice: "",
-    totalTicketSupply: "",
-    imageFile: null,
-  });
+  const [eventCreationData, setEventCreationData] = useState<EventCreationData>(
+    {
+      name: "",
+      description: "",
+      venue: "",
+      startTime: 0,
+      endTime: 0,
+      ticketPrice: 0,
+      totalTickets: 0,
+      imageUrl: "",
+    }
+  );
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [startDateTime, setStartDateTime] = useState("");
+  const [endDateTime, setEndDateTime] = useState("");
+  const [ticketPriceString, setTicketPriceString] = useState("");
+  const [totalTicketsString, setTotalTicketsString] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
-    if (!formData.eventName.trim())
-      newErrors.eventName = "Event name is required.";
-    if (!formData.description.trim())
+    if (!eventCreationData.name.trim())
+      newErrors.name = "Event name is required.";
+    if (!eventCreationData.description.trim())
       newErrors.description = "Description is required.";
-    if (!formData.venueName.trim())
-      newErrors.venueName = "Venue name is required.";
+    if (!eventCreationData.venue.trim())
+      newErrors.venue = "Venue name is required.";
 
-    if (!formData.eventDateTime) {
-      newErrors.eventDateTime = "Event date and time are required.";
+    if (!startDateTime) {
+      newErrors.startTime = "Event start date and time are required.";
     } else {
-      const eventDate = new Date(formData.eventDateTime);
+      const eventDate = new Date(startDateTime);
       if (eventDate.getTime() <= Date.now()) {
-        newErrors.eventDateTime = "Event date must be in the future.";
+        newErrors.startTime = "Event start date must be in the future.";
       }
     }
 
-    const price = Number.parseFloat(formData.ticketPrice);
+    if (!endDateTime) {
+      newErrors.endTime = "Event end date and time are required.";
+    } else if (startDateTime) {
+      const startDate = new Date(startDateTime);
+      const endDate = new Date(endDateTime);
+      if (endDate.getTime() <= startDate.getTime()) {
+        newErrors.endTime = "Event end time must be after start time.";
+      }
+    }
+
+    const price = Number.parseFloat(ticketPriceString);
     if (isNaN(price) || price <= 0)
       newErrors.ticketPrice = "Ticket price must be greater than 0 SUI.";
 
-    const supply = Number.parseInt(formData.totalTicketSupply, 10);
+    const supply = Number.parseInt(totalTicketsString, 10);
     if (isNaN(supply) || supply <= 0)
-      newErrors.totalTicketSupply =
-        "Total ticket supply must be a positive number.";
+      newErrors.totalTickets = "Total ticket supply must be a positive number.";
 
     // Image validation (optional)
-    if (formData.imageFile) {
+    if (imageFile) {
       const maxSize = 5 * 1024 * 1024; // 5MB
-      if (formData.imageFile.size > maxSize) {
-        newErrors.imageFile = "Image file must be smaller than 5MB.";
+      if (imageFile.size > maxSize) {
+        newErrors.imageUrl = "Image file must be smaller than 5MB.";
       }
 
       const allowedTypes = [
@@ -110,8 +114,8 @@ export default function CreateEventModal({
         "image/webp",
         "image/gif",
       ];
-      if (!allowedTypes.includes(formData.imageFile.type)) {
-        newErrors.imageFile = "Image must be JPEG, PNG, WebP, or GIF format.";
+      if (!allowedTypes.includes(imageFile.type)) {
+        newErrors.imageUrl = "Image must be JPEG, PNG, WebP, or GIF format.";
       }
     }
 
@@ -122,7 +126,7 @@ export default function CreateEventModal({
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setFormData({ ...formData, imageFile: file });
+      setImageFile(file);
 
       // Create preview
       const reader = new FileReader();
@@ -132,14 +136,14 @@ export default function CreateEventModal({
       reader.readAsDataURL(file);
 
       // Clear any previous image errors
-      if (errors.imageFile) {
-        setErrors({ ...errors, imageFile: undefined });
+      if (errors.imageUrl) {
+        setErrors({ ...errors, imageUrl: undefined });
       }
     }
   };
 
   const removeImage = () => {
-    setFormData({ ...formData, imageFile: null });
+    setImageFile(null);
     setImagePreview(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -152,28 +156,24 @@ export default function CreateEventModal({
 
     setIsSubmitting(true);
 
-    const eventTimestamp = Math.floor(
-      new Date(formData.eventDateTime).getTime() / 1000
-    );
-    const ticketPriceNum = Number.parseFloat(formData.ticketPrice);
-    const totalTicketSupplyNum = Number.parseInt(
-      formData.totalTicketSupply,
-      10
-    );
+    const eventDate = new Date(startDateTime);
+    const endDate = new Date(endDateTime);
+    const startTime = Math.floor(eventDate.getTime());
+    const endTime = Math.floor(endDate.getTime());
+    const ticketPrice =
+      Number.parseFloat(ticketPriceString) * 10 ** SUI_DECIMALS;
+    const totalTickets = Number.parseInt(totalTicketsString, 10);
 
-    const eventDataToSubmit = {
-      eventName: formData.eventName,
-      description: formData.description,
-      venueName: formData.venueName,
-      ticketPrice: formData.ticketPrice,
-      totalTicketSupply: formData.totalTicketSupply,
-      eventTimestamp,
-      ticketPriceNum,
-      totalTicketSupplyNum,
-      imageFile: formData.imageFile,
+    const eventDataToSubmit: EventCreationData = {
+      name: eventCreationData.name,
+      description: eventCreationData.description,
+      venue: eventCreationData.venue,
+      startTime,
+      endTime,
+      ticketPrice,
+      totalTickets,
+      imageUrl: imageFile ? URL.createObjectURL(imageFile) : "",
     };
-
-    console.log("Creating event:", eventDataToSubmit);
 
     let success = false;
     if (onCreateEvent) {
@@ -189,20 +189,26 @@ export default function CreateEventModal({
       // Show success toast
       toast({
         title: "Event Created Successfully!",
-        description: `"${formData.eventName}" has been created and is now live.`,
+        description: `"${eventCreationData.name}" has been created and is now live.`,
         variant: "default",
       });
       // Reset form and close modal immediately
-      setFormData({
-        eventName: "",
+      setEventCreationData({
+        name: "",
         description: "",
-        venueName: "",
-        eventDateTime: "",
-        ticketPrice: "",
-        totalTicketSupply: "",
-        imageFile: null,
+        venue: "",
+        startTime: 0,
+        endTime: 0,
+        ticketPrice: 0,
+        totalTickets: 0,
+        imageUrl: "",
       });
       setImagePreview(null);
+      setImageFile(null);
+      setStartDateTime("");
+      setEndDateTime("");
+      setTicketPriceString("");
+      setTotalTicketsString("");
       setErrors({});
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -223,9 +229,22 @@ export default function CreateEventModal({
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (errors[e.target.name as keyof FormErrors]) {
-      setErrors({ ...errors, [e.target.name]: undefined });
+    const { name, value } = e.target;
+
+    if (name === "startDateTime") {
+      setStartDateTime(value);
+    } else if (name === "endDateTime") {
+      setEndDateTime(value);
+    } else if (name === "ticketPrice") {
+      setTicketPriceString(value);
+    } else if (name === "totalTickets") {
+      setTotalTicketsString(value);
+    } else {
+      setEventCreationData({ ...eventCreationData, [name]: value });
+    }
+
+    if (errors[name as keyof FormErrors]) {
+      setErrors({ ...errors, [name]: undefined });
     }
     if (errors.general) {
       setErrors({ ...errors, general: undefined });
@@ -236,16 +255,22 @@ export default function CreateEventModal({
     if (!isSubmitting) {
       onClose();
       // Reset form when closing
-      setFormData({
-        eventName: "",
+      setEventCreationData({
+        name: "",
         description: "",
-        venueName: "",
-        eventDateTime: "",
-        ticketPrice: "",
-        totalTicketSupply: "",
-        imageFile: null,
+        venue: "",
+        startTime: 0,
+        endTime: 0,
+        ticketPrice: 0,
+        totalTickets: 0,
+        imageUrl: "",
       });
       setImagePreview(null);
+      setImageFile(null);
+      setStartDateTime("");
+      setEndDateTime("");
+      setTicketPriceString("");
+      setTotalTicketsString("");
       setErrors({});
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -319,42 +344,42 @@ export default function CreateEventModal({
               onChange={handleImageChange}
               className="hidden"
             />
-            {errors.imageFile && (
-              <p className="text-sm text-red-400">{errors.imageFile}</p>
+            {errors.imageUrl && (
+              <p className="text-sm text-red-400">{errors.imageUrl}</p>
             )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="eventName" className="text-aqua">
+              <Label htmlFor="name" className="text-aqua">
                 Event Name
               </Label>
               <Input
-                id="eventName"
-                name="eventName"
-                value={formData.eventName}
+                id="name"
+                name="name"
+                value={eventCreationData.name}
                 onChange={handleChange}
                 placeholder="e.g., Sui Summer Hackathon"
                 className="bg-deep-ocean border-sea text-cloud focus:ring-sea"
               />
-              {errors.eventName && (
-                <p className="text-sm text-red-400">{errors.eventName}</p>
+              {errors.name && (
+                <p className="text-sm text-red-400">{errors.name}</p>
               )}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="venueName" className="text-aqua">
+              <Label htmlFor="venue" className="text-aqua">
                 Venue Name
               </Label>
               <Input
-                id="venueName"
-                name="venueName"
-                value={formData.venueName}
+                id="venue"
+                name="venue"
+                value={eventCreationData.venue}
                 onChange={handleChange}
                 placeholder="e.g., Online or Physical Location"
                 className="bg-deep-ocean border-sea text-cloud focus:ring-sea"
               />
-              {errors.venueName && (
-                <p className="text-sm text-red-400">{errors.venueName}</p>
+              {errors.venue && (
+                <p className="text-sm text-red-400">{errors.venue}</p>
               )}
             </div>
           </div>
@@ -366,7 +391,7 @@ export default function CreateEventModal({
             <Textarea
               id="description"
               name="description"
-              value={formData.description}
+              value={eventCreationData.description}
               onChange={handleChange}
               placeholder="Tell us more about your event..."
               className="bg-deep-ocean border-sea text-cloud focus:ring-sea min-h-[100px]"
@@ -378,21 +403,40 @@ export default function CreateEventModal({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="eventDateTime" className="text-aqua">
-                Event Date & Time
+              <Label htmlFor="startDateTime" className="text-aqua">
+                Event Start Date & Time
               </Label>
               <Input
-                id="eventDateTime"
-                name="eventDateTime"
+                id="startDateTime"
+                name="startDateTime"
                 type="datetime-local"
-                value={formData.eventDateTime}
+                value={startDateTime}
                 onChange={handleChange}
                 className="bg-deep-ocean border-sea text-cloud focus:ring-sea"
               />
-              {errors.eventDateTime && (
-                <p className="text-sm text-red-400">{errors.eventDateTime}</p>
+              {errors.startTime && (
+                <p className="text-sm text-red-400">{errors.startTime}</p>
               )}
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="endDateTime" className="text-aqua">
+                Event End Date & Time
+              </Label>
+              <Input
+                id="endDateTime"
+                name="endDateTime"
+                type="datetime-local"
+                value={endDateTime}
+                onChange={handleChange}
+                className="bg-deep-ocean border-sea text-cloud focus:ring-sea"
+              />
+              {errors.endTime && (
+                <p className="text-sm text-red-400">{errors.endTime}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="ticketPrice" className="text-aqua">
                 Ticket Price (SUI)
@@ -401,7 +445,7 @@ export default function CreateEventModal({
                 id="ticketPrice"
                 name="ticketPrice"
                 type="number"
-                value={formData.ticketPrice}
+                value={ticketPriceString}
                 onChange={handleChange}
                 placeholder="e.g., 10"
                 min="0.01"
@@ -412,26 +456,25 @@ export default function CreateEventModal({
                 <p className="text-sm text-red-400">{errors.ticketPrice}</p>
               )}
             </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="totalTicketSupply" className="text-aqua">
-              Total Ticket Supply
-            </Label>
-            <Input
-              id="totalTicketSupply"
-              name="totalTicketSupply"
-              type="number"
-              value={formData.totalTicketSupply}
-              onChange={handleChange}
-              placeholder="e.g., 100"
-              min="1"
-              step="1"
-              className="bg-deep-ocean border-sea text-cloud focus:ring-sea"
-            />
-            {errors.totalTicketSupply && (
-              <p className="text-sm text-red-400">{errors.totalTicketSupply}</p>
-            )}
+            <div className="space-y-1.5">
+              <Label htmlFor="totalTickets" className="text-aqua">
+                Total Ticket Supply
+              </Label>
+              <Input
+                id="totalTickets"
+                name="totalTickets"
+                type="number"
+                value={totalTicketsString}
+                onChange={handleChange}
+                placeholder="e.g., 100"
+                min="1"
+                step="1"
+                className="bg-deep-ocean border-sea text-cloud focus:ring-sea"
+              />
+              {errors.totalTickets && (
+                <p className="text-sm text-red-400">{errors.totalTickets}</p>
+              )}
+            </div>
           </div>
 
           <div className="flex gap-3 pt-4">
@@ -446,7 +489,7 @@ export default function CreateEventModal({
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-sea text-deep-ocean hover:bg-opacity-80 disabled:opacity-50"
+              className="flex-1 bg-sea text-deep-ocean hover:bg-aqua hover:text-ocean disabled:opacity-50"
               disabled={isSubmitting}
             >
               {isSubmitting ? (

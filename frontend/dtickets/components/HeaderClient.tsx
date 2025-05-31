@@ -6,7 +6,7 @@ import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
 
 export default function HeaderClient() {
   const account = useCurrentAccount();
-  console.log('account :', account);
+  console.log("account :", account);
 
   return (
     <header className="bg-ocean border-b border-sea p-4">

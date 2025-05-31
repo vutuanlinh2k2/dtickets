@@ -21,8 +21,9 @@ import Image from "next/image";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import type { EventCreationData, Event } from "../types";
 import { useCreateEventMutation } from "../mutations/createEvent";
-import { formatSuiAmount } from "../utils/formatSuiAmount";
+import { formatSuiAmount } from "../lib/formatSuiAmount";
 import { BigNumber } from "bignumber.js";
+import { QueryKey } from "../constants";
 
 export default function MyEventsList() {
   const account = useCurrentAccount();
@@ -31,8 +32,12 @@ export default function MyEventsList() {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const { data: events, isLoading } = useQuery<Event[]>({
-    queryKey: ["events created by user"],
+  const {
+    data: events,
+    isLoading,
+    refetch,
+  } = useQuery<Event[]>({
+    queryKey: [QueryKey.MyEvents],
     queryFn: async () => {
       const data = await fetch(
         `http://localhost:3001/api/events/organizer/${walletAddress}`
@@ -45,9 +50,13 @@ export default function MyEventsList() {
   const handleCreateEvent = async (
     eventData: EventCreationData
   ): Promise<boolean> => {
+    console.log("Creating event:", eventData);
     return new Promise((resolve) => {
       createEvent(eventData, {
-        onSuccess: () => resolve(true),
+        onSuccess: () => {
+          refetch();
+          resolve(true);
+        },
         onError: () => resolve(false),
       });
     });
@@ -90,7 +99,7 @@ export default function MyEventsList() {
         <CreateEventModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          onCreateEvent={handleCreateEvent} // TODO: fix this
+          onCreateEvent={handleCreateEvent}
         />
       </div>
     );
