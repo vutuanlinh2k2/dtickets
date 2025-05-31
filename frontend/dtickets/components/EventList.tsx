@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, Loader2 } from "lucide-react";
-import { useCurrentAccount } from "@mysten/dapp-kit";
 import { SUI_DECIMALS } from "@mysten/sui/utils";
 
 // Original Event interface that EventCard expects
@@ -51,15 +50,11 @@ interface EventListProps {
 }
 
 export default function EventList({}: EventListProps) {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [dateFilter, setDateFilter] = useState<
     "all" | "upcoming" | "past" | "ongoing"
   >("all");
   const [priceFilter, setPriceFilter] = useState<string>("all");
-
-  const account = useCurrentAccount();
-  const isWalletConnected = !!account;
-  const walletAddress = account?.address;
 
   const { data: apiEvents, isLoading } = useQuery<ApiEvent[]>({
     queryKey: ["all events"],
@@ -99,28 +94,6 @@ export default function EventList({}: EventListProps) {
     return "past";
   };
 
-  const handleBuyTicket = async (
-    eventId: string,
-    recipients: string[]
-  ): Promise<"success" | "failed" | "no_tickets"> => {
-    console.log(
-      `Attempting to buy ${recipients.length} tickets for event: ${eventId}`
-    );
-    console.log("Recipients:", recipients);
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    const eventToUpdate = events.find((e) => e.id === eventId);
-    if (!eventToUpdate || eventToUpdate.remainingTickets < recipients.length) {
-      return "no_tickets";
-    }
-
-    // Simulate success/failure
-    const success = Math.random() > 0.2; // 80% success rate
-    return success ? "success" : "failed";
-  };
-
   const filteredEvents = useMemo(() => {
     if (!events || !apiEvents) return [];
 
@@ -151,7 +124,8 @@ export default function EventList({}: EventListProps) {
       tempEvents = tempEvents.filter((event) => {
         if (priceFilter === "0-10")
           return (
-            event.ticketPrice > 0 && event.ticketPrice <= 10 * 10 ** SUI_DECIMALS
+            event.ticketPrice > 0 &&
+            event.ticketPrice <= 10 * 10 ** SUI_DECIMALS
           );
         if (priceFilter === "10-50")
           return (
@@ -159,7 +133,6 @@ export default function EventList({}: EventListProps) {
             event.ticketPrice <= 50 * 10 ** SUI_DECIMALS
           );
         if (priceFilter === "50+") {
-          console.log(event.ticketPrice);
           return event.ticketPrice > 50 * 10 ** SUI_DECIMALS;
         }
         return true;
@@ -286,13 +259,7 @@ export default function EventList({}: EventListProps) {
       {filteredEvents.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredEvents.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              isWalletConnected={isWalletConnected}
-              walletAddress={walletAddress ?? null}
-              onBuyTicket={handleBuyTicket}
-            />
+            <EventCard key={event.id} event={event} />
           ))}
         </div>
       ) : (

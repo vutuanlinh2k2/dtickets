@@ -49,7 +49,6 @@ export default function MyEventsList() {
   const handleCreateEvent = async (
     eventData: EventCreationData
   ): Promise<boolean> => {
-    console.log("Creating event:", eventData);
     return new Promise((resolve) => {
       createEvent(eventData, {
         onSuccess: async () => {

@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import { Users, Calendar, Ticket } from "lucide-react";
-import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
+import { ConnectButton } from "@mysten/dapp-kit";
 
 export default function HeaderClient() {
-  const account = useCurrentAccount();
-  console.log("account :", account);
 
   return (
     <header className="bg-ocean border-b border-sea p-4">

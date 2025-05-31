@@ -31,7 +31,6 @@ const fetchMockUserTickets = async (
   address: string | null
 ): Promise<OwnedTicket[]> => {
   if (!address) return [];
-  console.log(`Fetching tickets for ${address}...`);
   await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate API delay
 
   const now = Math.floor(Date.now() / 1000);

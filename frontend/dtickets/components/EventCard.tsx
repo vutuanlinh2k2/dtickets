@@ -27,23 +27,17 @@ import ProcessingOverlay from "./ProcessingOverlay";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { formatSuiAmount } from "../lib/formatSuiAmount";
+import { usePurchaseTicketMutation } from "../mutations/purchaseTicket";
+import { useCurrentAccount } from "@mysten/dapp-kit";
 
 interface EventCardProps {
   event: Event;
-  isWalletConnected: boolean;
-  walletAddress: string | null;
-  onBuyTicket: (
-    eventId: string,
-    recipients: string[]
-  ) => Promise<"success" | "failed" | "no_tickets">;
 }
 
-export default function EventCard({
-  event,
-  isWalletConnected,
-  walletAddress,
-  onBuyTicket,
-}: EventCardProps) {
+export default function EventCard({ event }: EventCardProps) {
+  const currentAccount = useCurrentAccount();
+  const purchaseTicketMutation = usePurchaseTicketMutation();
+
   const [purchaseStatus, setPurchaseStatus] = useState<
     "idle" | "processing" | "success" | "failed" | "no_tickets"
   >("idle");
@@ -59,6 +53,9 @@ export default function EventCard({
   const [clientDeterminedIsOngoingEvent, setClientDeterminedIsOngoingEvent] =
     useState(false);
   const [isClientMounted, setIsClientMounted] = useState(false);
+
+  const isWalletConnected = !!currentAccount?.address;
+  const walletAddress = currentAccount?.address || null;
 
   useEffect(() => {
     setDisplayedDate(formatUnixTimestamp(event.dateTime));
@@ -99,25 +96,25 @@ export default function EventCard({
   const handlePurchase = async (
     recipients: string[]
   ): Promise<"success" | "failed" | "no_tickets"> => {
-    console.log(
-      `Attempting to buy ${recipients.length} tickets for event: ${event.id}`
-    );
-    console.log("Recipients:", recipients);
-
     setIsProcessing(true);
     setPurchaseStatus("processing");
 
     try {
-      const result = await onBuyTicket(event.id, recipients);
-      setPurchaseStatus(result);
+      await purchaseTicketMutation.mutateAsync({
+        eventId: event.id,
+        pricePerTicket: event.ticketPrice,
+        recipients,
+      });
 
-      if (result === "success") {
-        setCurrentRemainingTickets((prev) =>
-          Math.max(0, prev - recipients.length)
-        );
-      }
-
-      return result;
+      setPurchaseStatus("success");
+      setCurrentRemainingTickets((prev) =>
+        Math.max(0, prev - recipients.length)
+      );
+      return "success";
+    } catch (error) {
+      console.error("Purchase failed:", error);
+      setPurchaseStatus("failed");
+      return "failed";
     } finally {
       setIsProcessing(false);
     }
@@ -211,13 +208,16 @@ export default function EventCard({
             {event.shortDescription}
           </p>
           <div className="flex items-center text-aqua group-hover:text-cloud transition-colors duration-300">
-            <Tag className="mr-2 h-4 w-4" /> {formatSuiAmount(event.ticketPrice.toString())} SUI
+            <Tag className="mr-2 h-4 w-4" />{" "}
+            {formatSuiAmount(event.ticketPrice.toString())} SUI
           </div>
           <div className="flex items-center text-aqua group-hover:text-cloud transition-colors duration-300">
             <Users className="mr-2 h-4 w-4" /> {currentRemainingTickets}/
             {event.totalTickets} available
           </div>
         </CardContent>
+
+        {/* TODO: update this later */}
         <CardFooter className="flex-col items-stretch space-y-2">
           {purchaseStatus === "processing" && (
             <div className="flex items-center justify-center text-aqua">

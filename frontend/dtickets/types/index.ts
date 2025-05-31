@@ -9,6 +9,12 @@ export type EventCreationData = {
   imageUrl: string;
 };
 
+export type TicketPurchaseData = {
+  eventId: string;
+  pricePerTicket: number;
+  recipients: string[];
+};
+
 export type Event = {
   id: string;
   createdAt: string;
