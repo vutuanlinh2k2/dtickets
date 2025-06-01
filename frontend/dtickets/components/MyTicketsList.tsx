@@ -20,6 +20,7 @@ import { formatDateString } from "@/lib/utils";
 import type { Ticket } from "../types";
 import ResellTicketModal from "./ResellTicketModal";
 import { useCreateEventMutation } from "../mutations/resellTicket";
+import { API_ENDPOINT } from "../constants";
 
 export default function MyTicketsList() {
   const { isConnecting } = useCurrentWallet();
@@ -35,7 +36,7 @@ export default function MyTicketsList() {
     queryKey: [QueryKey.MyTickets],
     queryFn: async () => {
       const data = await fetch(
-        `http://localhost:3001/api/tickets/owner/${walletAddress}`
+        `${API_ENDPOINT}/tickets/owner/${walletAddress}`
       );
       return data.json();
     },

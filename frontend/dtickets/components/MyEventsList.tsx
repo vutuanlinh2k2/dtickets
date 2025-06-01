@@ -25,6 +25,7 @@ import { formatSuiAmount } from "../lib/formatSuiAmount";
 import { BigNumber } from "bignumber.js";
 import { QueryKey } from "../constants";
 import { useToast } from "@/hooks/use-toast";
+import { API_ENDPOINT } from "../constants";
 
 export default function MyEventsList() {
   const account = useCurrentAccount();
@@ -39,7 +40,7 @@ export default function MyEventsList() {
     queryKey: [QueryKey.MyEvents],
     queryFn: async () => {
       const data = await fetch(
-        `http://localhost:3001/api/events/organizer/${walletAddress}`
+        `${API_ENDPOINT}/events/organizer/${walletAddress}`
       );
       return data.json();
     },

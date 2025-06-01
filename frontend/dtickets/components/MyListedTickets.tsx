@@ -27,6 +27,7 @@ import { QueryKey } from "../constants";
 import { formatDateString } from "@/lib/utils";
 import { formatSuiAmount } from "@/lib/formatSuiAmount";
 import { useCancelResaleMutation } from "../mutations/cancelResale";
+import { API_ENDPOINT } from "../constants";
 
 interface MyListedTicketsProps {
   walletAddress: string;
@@ -46,7 +47,7 @@ export default function MyListedTickets({
     queryKey: [QueryKey.MyListedTickets],
     queryFn: async () => {
       const data = await fetch(
-        `http://localhost:3001/api/resale-tickets/seller/${walletAddress}`
+        `${API_ENDPOINT}/resale-tickets/seller/${walletAddress}`
       );
       return data.json();
     },

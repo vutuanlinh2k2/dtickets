@@ -28,6 +28,7 @@ import type { ResaleListing } from "../types";
 import { formatSuiAmount } from "@/lib/formatSuiAmount";
 import { usePurchaseResaleTicketMutation } from "../mutations/purchaseResaleTicket";
 import { useCurrentAccount } from "@mysten/dapp-kit";
+import { API_ENDPOINT } from "../constants";
 
 interface ResaleMarketListProps {
   walletAddress: string;
@@ -51,7 +52,7 @@ export default function ResaleMarketList({
     queryKey: [QueryKey.ResaleMarket, walletAddress],
     queryFn: async () => {
       const response = await fetch(
-        `http://localhost:3001/api/resale-tickets?exclude=${walletAddress}`
+        `${API_ENDPOINT}/resale-tickets?exclude=${walletAddress}`
       );
       return response.json();
     },

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Search, Loader2 } from "lucide-react";
 import { SUI_DECIMALS } from "@mysten/sui/utils";
+import { API_ENDPOINT } from "../constants";
 
 // Original Event interface that EventCard expects
 export interface Event {
@@ -59,7 +60,7 @@ export default function EventList({}: EventListProps) {
   const { data: apiEvents, isLoading } = useQuery<ApiEvent[]>({
     queryKey: ["all events"],
     queryFn: async () => {
-      const response = await fetch("http://localhost:3001/api/events");
+      const response = await fetch(`${API_ENDPOINT}/events`);
       return response.json();
     },
   });

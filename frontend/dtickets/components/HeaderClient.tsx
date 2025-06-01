@@ -13,7 +13,7 @@ export default function HeaderClient() {
           href="/"
           className="text-2xl font-bold text-sea hover:text-aqua transition-all duration-300 hover:drop-shadow-lg"
         >
-          SuiTickets
+          dTickets
         </Link>
         <nav className="space-x-6 flex items-center">
           <Link
