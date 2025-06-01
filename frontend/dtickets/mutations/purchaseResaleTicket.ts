@@ -87,7 +87,7 @@ export function usePurchaseResaleTicketMutation() {
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: [QueryKey.ResaleMarket] });
         queryClient.invalidateQueries({ queryKey: [QueryKey.MyTickets] });
-      }, 1_000);
+      }, 1_100);
     },
   });
 }

@@ -36,7 +36,7 @@ export function useCancelResaleMutation() {
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: [QueryKey.MyListedTickets] });
         queryClient.invalidateQueries({ queryKey: [QueryKey.MyTickets] });
-      }, 1_000);
+      }, 1_100);
     },
   });
 }

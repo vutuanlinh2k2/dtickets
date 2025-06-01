@@ -47,7 +47,7 @@ export function useCreateEventMutation() {
     onSuccess: () => {
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: [QueryKey.MyEvents] });
-      }, 1_000);
+      }, 1_100);
     },
   });
 }

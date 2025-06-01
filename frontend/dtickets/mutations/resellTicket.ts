@@ -47,7 +47,7 @@ export function useCreateEventMutation() {
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: [QueryKey.MyTickets] });
         queryClient.invalidateQueries({ queryKey: [QueryKey.MyListedTickets] });
-      }, 1_000);
+      }, 1_100);
     },
   });
 }
