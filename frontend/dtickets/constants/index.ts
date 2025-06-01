@@ -2,6 +2,8 @@ export enum QueryKey {
   AllEvents = "allEvents",
   MyTickets = "myTickets",
   MyEvents = "myEvents",
+  MyListedTickets = "myListedTickets",
+  ResaleMarket = "resaleMarket",
 }
 
 export const DTICKETS_PACKAGE_ID =

@@ -161,9 +161,11 @@ export const handleDTicketsEvents = async (
         resaleListingUpdates[data.listing_id] = {
           id: data.listing_id,
           isActive: false,
+          updateOnly: true, // Flag to indicate this should only update
         };
       } else {
         resaleListingUpdates[data.listing_id].isActive = false;
+        resaleListingUpdates[data.listing_id].updateOnly = true;
       }
 
       // Update ticket to mark as no longer listed for sale (only update, don't create)
@@ -190,9 +192,11 @@ export const handleDTicketsEvents = async (
         resaleListingUpdates[data.listing_id] = {
           id: data.listing_id,
           isActive: false,
+          updateOnly: true, // Flag to indicate this should only update
         };
       } else {
         resaleListingUpdates[data.listing_id].isActive = false;
+        resaleListingUpdates[data.listing_id].updateOnly = true;
       }
 
       // Update ticket owner and mark as no longer listed for sale (only update, don't create)
@@ -295,21 +299,41 @@ export const handleDTicketsEvents = async (
 
   // Process resale listing updates
   if (Object.keys(resaleListingUpdates).length > 0) {
-    const resalePromises = Object.values(resaleListingUpdates).map((update) =>
-      prisma.resaleListing.upsert({
-        where: {
-          id: update.id,
-        },
-        create: update,
-        update: {
-          isActive: update.isActive,
-          ...(update.ticketId && { ticketId: update.ticketId }),
-          ...(update.eventId && { eventId: update.eventId }),
-          ...(update.seller && { seller: update.seller }),
-          ...(update.resalePrice && { resalePrice: update.resalePrice }),
-        },
-      })
-    );
+    const resalePromises = Object.values(resaleListingUpdates).map((update) => {
+      // If this is an update-only operation (for cancellation/resold events), use update instead of upsert
+      if (update.updateOnly) {
+        const { updateOnly, ...updateData } = update;
+        return prisma.resaleListing.update({
+          where: {
+            id: update.id,
+          },
+          data: {
+            isActive: updateData.isActive,
+            ...(updateData.ticketId && { ticketId: updateData.ticketId }),
+            ...(updateData.eventId && { eventId: updateData.eventId }),
+            ...(updateData.seller && { seller: updateData.seller }),
+            ...(updateData.resalePrice && {
+              resalePrice: updateData.resalePrice,
+            }),
+          },
+        });
+      } else {
+        // For new listings (from TicketListedForResale events), use upsert
+        return prisma.resaleListing.upsert({
+          where: {
+            id: update.id,
+          },
+          create: update,
+          update: {
+            isActive: update.isActive,
+            ...(update.ticketId && { ticketId: update.ticketId }),
+            ...(update.eventId && { eventId: update.eventId }),
+            ...(update.seller && { seller: update.seller }),
+            ...(update.resalePrice && { resalePrice: update.resalePrice }),
+          },
+        });
+      }
+    });
 
     await Promise.all(resalePromises);
   }

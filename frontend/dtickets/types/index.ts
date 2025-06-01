@@ -44,3 +44,16 @@ export type Ticket = {
   imageUrl?: string; // Add optional image URL
   isListedForSale: boolean;
 };
+
+export type ResaleListing = {
+  id: string;
+  ticketId: string;
+  eventId: string;
+  eventName: string;
+  eventStartTime: string;
+  eventEndTime: string;
+  eventVenue: string;
+  eventImgUrl: string;
+  listingPrice: string;
+  createdAt: string;
+};

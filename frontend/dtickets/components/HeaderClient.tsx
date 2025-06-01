@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Users, Calendar, Ticket } from "lucide-react";
+import { Users, Calendar, Ticket, Store } from "lucide-react";
 import { ConnectButton } from "@mysten/dapp-kit";
 
 export default function HeaderClient() {
@@ -36,6 +36,13 @@ export default function HeaderClient() {
           >
             <Users className="mr-1 h-4 w-4" />
             My Events
+          </Link>
+          <Link
+            href="/resale-market"
+            className="text-aqua hover:text-sea transition-all duration-300 flex items-center hover:drop-shadow-md"
+          >
+            <Store className="mr-1 h-4 w-4" />
+            Resale Market
           </Link>
 
           {/* Wallet Connection */}

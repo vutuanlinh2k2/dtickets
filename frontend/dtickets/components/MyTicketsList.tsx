@@ -241,12 +241,14 @@ export default function MyTicketsList() {
                 {ticket.venue}
               </div>
               <div className="space-y-1">
-                <p className="text-aqua text-sm group-hover:text-cloud transition-colors duration-300">
-                  Ticket ID:
-                </p>
-                <p className="text-cloud font-mono text-sm group-hover:text-sea transition-colors duration-300">
-                  {ticket.ticketNumber}
-                </p>
+                <div className="flex items-center space-x-2">
+                  <span className="text-aqua text-sm group-hover:text-cloud transition-colors duration-300">
+                    Ticket ID:
+                  </span>
+                  <span className="text-cloud font-mono text-sm group-hover:text-sea transition-colors duration-300">
+                    {ticket.ticketNumber}
+                  </span>
+                </div>
               </div>
               <div className="space-y-1">
                 <p className="text-aqua text-sm group-hover:text-cloud transition-colors duration-300">
