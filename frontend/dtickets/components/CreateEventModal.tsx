@@ -17,6 +17,7 @@ import {
 import Image from "next/image";
 import { EventCreationData } from "@/types";
 import { SUI_DECIMALS } from "@mysten/sui/utils";
+import { pinata } from "../lib/pinata";
 
 interface FormErrors {
   name?: string;
@@ -162,6 +163,12 @@ export default function CreateEventModal({
       Number.parseFloat(ticketPriceString) * 10 ** SUI_DECIMALS;
     const totalTickets = Number.parseInt(totalTicketsString, 10);
 
+    let imageUrl = "";
+    if (imageFile) {
+      const { cid } = await pinata.upload.public.file(imageFile);
+      imageUrl = await pinata.gateways.public.convert(cid);
+    }
+
     const eventDataToSubmit: EventCreationData = {
       name: eventCreationData.name,
       description: eventCreationData.description,
@@ -170,7 +177,7 @@ export default function CreateEventModal({
       endTime,
       ticketPrice,
       totalTickets,
-      imageUrl: imageFile ? URL.createObjectURL(imageFile) : "",
+      imageUrl,
     };
 
     let success = false;

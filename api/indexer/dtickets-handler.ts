@@ -14,6 +14,7 @@ type EventCreated = {
   organizer: string;
   ticket_price: string;
   total_tickets: string;
+  imgUrl: string;
 };
 
 type TicketPurchased = {
@@ -58,7 +59,7 @@ export const handleDTicketsEvents = async (
           description: "", // Will be updated if we get more data
           venue: data.venue,
           organizer: data.organizer,
-          imgUrl: "", // Will be updated if we get more data
+          imgUrl: data.imgUrl,
           startTime,
           endTime,
           ticketPrice: data.ticket_price,

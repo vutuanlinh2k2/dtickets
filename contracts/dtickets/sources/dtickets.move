@@ -51,6 +51,7 @@ public struct EventCreated has copy, drop {
     organizer: address,
     ticket_price: u64,
     total_tickets: u64,
+    imgUrl: String,
 }
 
 public struct TicketPurchased has copy, drop {
@@ -110,6 +111,7 @@ public fun create_event(
         start_time,
         end_time,
         venue: event.venue,
+        imgUrl: event.imgUrl,
     });
 
     transfer::share_object(event);

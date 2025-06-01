@@ -46,6 +46,8 @@ export default function MyEventsList() {
     enabled: !!walletAddress,
   });
 
+  console.log("events", events);
+
   const handleCreateEvent = async (
     eventData: EventCreationData
   ): Promise<boolean> => {
