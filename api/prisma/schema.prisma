@@ -38,14 +38,15 @@ model Event {
 
 // Ticket model representing ticket NFTs
 model Ticket {
-  id           String @id // Sui object ID
-  eventId      String // References Event.id
-  ticketNumber Int
-  owner        String // Current owner address
-  createdAt    DateTime @default(now())
+  id               String @id // Sui object ID
+  eventId          String // References Event.id
+  ticketNumber     Int
+  owner            String // Current owner address
+  isListedForSale  Boolean @default(false) // Whether ticket is currently listed for resale
+  createdAt        DateTime @default(now())
   
   // Relations
-  event        Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event            Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   
   @@map("tickets")
   @@unique([eventId, ticketNumber])

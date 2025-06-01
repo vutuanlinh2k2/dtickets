@@ -138,6 +138,16 @@ export const handleDTicketsEvents = async (
         isActive: true,
       };
 
+      // Update ticket to mark as listed for sale
+      if (!Object.hasOwn(ticketUpdates, data.ticket_id)) {
+        ticketUpdates[data.ticket_id] = {
+          id: data.ticket_id,
+          isListedForSale: true,
+        };
+      } else {
+        ticketUpdates[data.ticket_id].isListedForSale = true;
+      }
+
       continue;
     }
 
@@ -152,6 +162,16 @@ export const handleDTicketsEvents = async (
         };
       } else {
         resaleListingUpdates[data.listing_id].isActive = false;
+      }
+
+      // Update ticket to mark as no longer listed for sale
+      if (!Object.hasOwn(ticketUpdates, data.ticket_id)) {
+        ticketUpdates[data.ticket_id] = {
+          id: data.ticket_id,
+          isListedForSale: false,
+        };
+      } else {
+        ticketUpdates[data.ticket_id].isListedForSale = false;
       }
 
       continue;
@@ -171,14 +191,16 @@ export const handleDTicketsEvents = async (
         resaleListingUpdates[data.listing_id].isActive = false;
       }
 
-      // Update ticket owner
+      // Update ticket owner and mark as no longer listed for sale
       if (!Object.hasOwn(ticketUpdates, data.ticket_id)) {
         ticketUpdates[data.ticket_id] = {
           id: data.ticket_id,
           owner: data.buyer,
+          isListedForSale: false,
         };
       } else {
         ticketUpdates[data.ticket_id].owner = data.buyer;
+        ticketUpdates[data.ticket_id].isListedForSale = false;
       }
 
       continue;
@@ -217,7 +239,10 @@ export const handleDTicketsEvents = async (
         },
         create: update,
         update: {
-          owner: update.owner,
+          ...(update.owner && { owner: update.owner }),
+          ...(update.isListedForSale !== undefined && {
+            isListedForSale: update.isListedForSale,
+          }),
         },
       })
     );

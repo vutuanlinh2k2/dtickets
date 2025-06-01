@@ -53,7 +53,30 @@ app.get("/api/tickets/owner/:address", async (req: any, res: any) => {
         createdAt: "desc",
       },
     });
-    res.json(tickets);
+
+    // Get resale listing information for tickets that are listed for sale
+    // Note: isListedForSale field added via schema migration
+    const enrichedTickets = await Promise.all(
+      tickets.map(async (ticket) => {
+        let resaleListing = null;
+        // Type assertion needed until TypeScript picks up updated Prisma types
+        if ((ticket as any).isListedForSale) {
+          resaleListing = await prisma.resaleListing.findFirst({
+            where: {
+              ticketId: ticket.id,
+              isActive: true,
+            },
+          });
+        }
+
+        return {
+          ...ticket,
+          resaleListing,
+        };
+      })
+    );
+
+    res.json(enrichedTickets);
   } catch (error) {
     console.error("Error fetching tickets:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -83,10 +106,21 @@ app.get("/api/events/organizer/:address", async (req: any, res: any) => {
 // Get all available resale tickets
 app.get("/api/resale-tickets", async (req: any, res: any) => {
   try {
+    const { exclude } = req.query; // Optional address to exclude from results
+
+    const whereClause: any = {
+      isActive: true,
+    };
+
+    // If exclude parameter is provided, filter out listings from that address
+    if (exclude) {
+      whereClause.seller = {
+        not: exclude,
+      };
+    }
+
     const resaleTickets = await prisma.resaleListing.findMany({
-      where: {
-        isActive: true,
-      },
+      where: whereClause,
       orderBy: {
         createdAt: "desc",
       },
@@ -158,6 +192,9 @@ app.listen(PORT, () => {
   console.log(`  GET /api/tickets/owner/:address - Get tickets by owner`);
   console.log(`  GET /api/events/organizer/:address - Get events by organizer`);
   console.log(`  GET /api/resale-tickets - Get all available resale tickets`);
+  console.log(
+    `  GET /api/resale-tickets?exclude=:address - Get resale tickets excluding specific seller`
+  );
   console.log(
     `  GET /api/resale-tickets/event/:eventId - Get resale tickets for an event`
   );
