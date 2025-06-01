@@ -20,7 +20,6 @@ import { formatDateString } from "@/lib/utils";
 import type { Ticket } from "../types";
 import ResellTicketModal from "./ResellTicketModal";
 import { useCreateEventMutation } from "../mutations/resellTicket";
-import { formatSuiAmount } from "@/lib/formatSuiAmount";
 
 export default function MyTicketsList() {
   const { isConnecting } = useCurrentWallet();
@@ -247,16 +246,6 @@ export default function MyTicketsList() {
                   </span>
                   <span className="text-cloud font-mono text-sm group-hover:text-sea transition-colors duration-300">
                     {ticket.ticketNumber}
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                  <span className="text-aqua text-sm group-hover:text-cloud transition-colors duration-300">
-                    Price:
-                  </span>
-                  <span className="text-cloud font-mono text-sm group-hover:text-sea transition-colors duration-300">
-                    {formatSuiAmount(ticket.purchaseAmount)} SUI
                   </span>
                 </div>
               </div>

@@ -65,6 +65,7 @@ export default function MyListedTickets({
     eventImgUrl: listing.event.imgUrl,
     listingPrice: listing.resalePrice,
     createdAt: listing.createdAt,
+    seller: listing.seller,
   }));
 
   const handleCancelClick = (listing: ResaleListing) => {

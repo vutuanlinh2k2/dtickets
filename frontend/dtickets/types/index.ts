@@ -57,4 +57,5 @@ export type ResaleListing = {
   eventImgUrl: string;
   listingPrice: string;
   createdAt: string;
+  seller: string;
 };

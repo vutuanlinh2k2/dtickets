@@ -11,9 +11,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Loader2, ShoppingCart } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import type { ResaleListing } from "../types";
-import { formatUnixTimestamp } from "@/lib/utils";
+import { formatDateString } from "@/lib/utils";
+import { formatSuiAmount } from "@/lib/formatSuiAmount";
 import Image from "next/image";
 
 interface BuyResoldTicketModalProps {
@@ -21,35 +21,20 @@ interface BuyResoldTicketModalProps {
   onClose: () => void;
   listing: ResaleListing;
   currentUserAddress: string;
-  onPurchaseConfirm: (
-    listingId: string
-  ) => Promise<"success" | "failed" | "not_available">;
+  onPurchaseConfirm: () => Promise<"success" | "failed" | "not_available">;
 }
 
 export default function BuyResoldTicketModal({
   isOpen,
   onClose,
   listing,
-  currentUserAddress,
   onPurchaseConfirm,
 }: BuyResoldTicketModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
 
   const handleSubmit = async () => {
-    if (
-      listing.sellerAddress.toLowerCase() === currentUserAddress.toLowerCase()
-    ) {
-      toast({
-        title: "Action Not Allowed",
-        description: "You cannot buy your own listed ticket.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
-    const result = await onPurchaseConfirm(listing.listingId);
+    const result = await onPurchaseConfirm();
     setIsSubmitting(false);
 
     if (result === "success") {
@@ -76,15 +61,15 @@ export default function BuyResoldTicketModal({
             Confirm Purchase
           </DialogTitle>
           <DialogDescription className="text-aqua">
-            You are about to buy a ticket for "{listing.eventName}".
+            You are about to buy a ticket for &quot;{listing.eventName}&quot;.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {listing.imageUrl && (
+          {listing.eventImgUrl && (
             <div className="relative w-full h-48 rounded-lg overflow-hidden border border-sea">
               <Image
-                src={listing.imageUrl || "/placeholder.svg"}
+                src={listing.eventImgUrl || "/placeholder.svg"}
                 alt={listing.eventName}
                 layout="fill"
                 objectFit="cover"
@@ -97,24 +82,22 @@ export default function BuyResoldTicketModal({
               {listing.eventName}
             </p>
             <p className="text-sm text-aqua">
-              Date: {formatUnixTimestamp(listing.eventDate)}
+              Date: {formatDateString(listing.eventStartTime)} -{" "}
+              {formatDateString(listing.eventEndTime)}
             </p>
-            <p className="text-sm text-aqua">Venue: {listing.venueName}</p>
-            <p className="text-sm text-aqua">
-              Original Price: {listing.originalPrice} SUI
+            <p className="text-sm text-aqua">Venue: {listing.eventVenue}</p>
+            <p className="text-sm text-aqua break-all">
+              Seller: {listing.seller}
             </p>
             <p className="text-sm text-aqua">
-              Seller:{" "}
-              <span className="font-mono text-xs">
-                {listing.sellerAddress.substring(0, 10)}...
-              </span>
+              Listed: {formatDateString(listing.createdAt)}
             </p>
           </div>
 
           <div className="text-center pt-2">
             <p className="text-aqua">You Pay (Resale Price):</p>
             <p className="text-3xl font-bold text-sea">
-              {listing.resalePrice} SUI
+              {formatSuiAmount(listing.listingPrice)} SUI
             </p>
           </div>
         </div>
@@ -133,11 +116,7 @@ export default function BuyResoldTicketModal({
             type="button"
             onClick={handleSubmit}
             className="flex-1 bg-sea text-deep-ocean hover:bg-aqua hover:text-ocean disabled:opacity-50"
-            disabled={
-              isSubmitting ||
-              listing.sellerAddress.toLowerCase() ===
-                currentUserAddress.toLowerCase()
-            }
+            disabled={isSubmitting}
           >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             <ShoppingCart className="mr-2 h-4 w-4" /> Confirm & Buy
