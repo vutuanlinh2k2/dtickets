@@ -21,8 +21,8 @@ A decentralized ticketing platform built on the Sui blockchain that enables secu
         │                        │                        │
         ▼                        ▼                        ▼
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│  Sui Wallet     │    │   PostgreSQL/    │    │  Sui Blockchain │
-│  Integration    │    │   SQLite DB      │    │   Network       │
+│  Sui Wallet     │    │   SQLite DB      │    │  Sui Blockchain │
+│  Integration    │    │                  │    │   Network       │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
 
@@ -166,7 +166,7 @@ dtickets/
 
 - **Node.js + Express**: REST API server
 - **Prisma**: Database ORM and migrations
-- **SQLite/PostgreSQL**: Database storage
+- **SQLite**: Database storage
 - **TypeScript**: Type-safe development
 
 ### Frontend
@@ -268,7 +268,7 @@ npm test
 
 ### Backend
 
-1. Set up production database (PostgreSQL recommended)
+1. Set up production database (SQLite is used by default)
 2. Configure environment variables
 3. Deploy to your preferred hosting service
 4. Ensure indexer runs continuously
