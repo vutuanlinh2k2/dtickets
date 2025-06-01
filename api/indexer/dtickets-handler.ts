@@ -123,7 +123,6 @@ export const handleDTicketsEvents = async (
     );
 
     await Promise.all(eventPromises);
-    console.log(`Processed ${Object.keys(eventUpdates).length} event updates`);
   }
 
   // Process ticket updates and update event ticket counts
@@ -157,9 +156,5 @@ export const handleDTicketsEvents = async (
         data: { ticketsSold: ticketCount },
       });
     }
-
-    console.log(
-      `Processed ${Object.keys(ticketUpdates).length} ticket updates`
-    );
   }
 };

@@ -17,7 +17,6 @@ export function useWalletQueryInvalidation() {
 
     // If wallet disconnected (had account, now don't)
     if (previousAddress && !currentAddress) {
-      console.log("Wallet disconnected - invalidating all queries");
       queryClient.invalidateQueries();
       queryClient.clear(); // Optional: also clear the cache completely
     }
@@ -27,12 +26,10 @@ export function useWalletQueryInvalidation() {
       currentAddress &&
       previousAddress !== currentAddress
     ) {
-      console.log("Wallet changed - invalidating all queries");
       queryClient.invalidateQueries();
     }
     // If wallet connected for the first time (no previous, now has account)
     else if (!previousAddress && currentAddress) {
-      console.log("Wallet connected - clearing any existing queries");
       queryClient.invalidateQueries();
     }
 

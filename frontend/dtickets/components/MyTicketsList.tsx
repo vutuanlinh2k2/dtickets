@@ -43,8 +43,6 @@ export default function MyTicketsList() {
     enabled: !!walletAddress,
   });
 
-  console.log("data :", data);
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tickets: Ticket[] = (data ?? []).map((ticket: any) => ({
     id: ticket.id,
