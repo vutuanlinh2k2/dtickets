@@ -80,8 +80,88 @@ app.get("/api/events/organizer/:address", async (req: any, res: any) => {
   }
 });
 
+// Get all available resale tickets
+app.get("/api/resale-tickets", async (req: any, res: any) => {
+  try {
+    const resaleTickets = await prisma.resaleListing.findMany({
+      where: {
+        isActive: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    // Get additional details about the tickets and events
+    const enrichedResaleTickets = await Promise.all(
+      resaleTickets.map(async (listing) => {
+        // Get the event details
+        const event = await prisma.event.findUnique({
+          where: { id: listing.eventId },
+        });
+
+        return {
+          ...listing,
+          event,
+        };
+      })
+    );
+
+    res.json(enrichedResaleTickets);
+  } catch (error) {
+    console.error("Error fetching resale tickets:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get resale tickets by seller
+app.get("/api/resale-tickets/seller/:address", async (req: any, res: any) => {
+  try {
+    const { address } = req.params;
+    const resaleTickets = await prisma.resaleListing.findMany({
+      where: {
+        seller: address,
+        isActive: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    // Get additional details about the events
+    const enrichedResaleTickets = await Promise.all(
+      resaleTickets.map(async (listing) => {
+        const event = await prisma.event.findUnique({
+          where: { id: listing.eventId },
+        });
+
+        return {
+          ...listing,
+          event,
+        };
+      })
+    );
+
+    res.json(enrichedResaleTickets);
+  } catch (error) {
+    console.error("Error fetching seller's resale tickets:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`dTickets API server running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
+  console.log(`Available endpoints:`);
+  console.log(`  GET /api/events - Get all events`);
+  console.log(`  GET /api/tickets/owner/:address - Get tickets by owner`);
+  console.log(`  GET /api/events/organizer/:address - Get events by organizer`);
+  console.log(`  GET /api/resale-tickets - Get all available resale tickets`);
+  console.log(
+    `  GET /api/resale-tickets/event/:eventId - Get resale tickets for an event`
+  );
+  console.log(
+    `  GET /api/resale-tickets/seller/:address - Get resale tickets by seller`
+  );
 });

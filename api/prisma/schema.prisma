@@ -51,3 +51,19 @@ model Ticket {
   @@unique([eventId, ticketNumber])
 }
 
+// ResaleListing model for tracking ticket resales
+model ResaleListing {
+  id              String   @id // Sui listing object ID
+  ticketId        String   // Sui ticket object ID
+  eventId         String   // Original event ID for convenience
+  seller          String   // Seller address
+  resalePrice     String   // Resale price in MIST
+  isActive        Boolean  @default(true) // Whether listing is still active
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("resale_listings")
+  @@index([isActive])
+  @@index([eventId])
+}
+

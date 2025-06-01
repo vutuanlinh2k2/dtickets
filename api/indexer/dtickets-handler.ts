@@ -26,6 +26,29 @@ type TicketPurchased = {
   ticket_number: string;
 };
 
+type TicketListedForResale = {
+  listing_id: string;
+  ticket_id: string;
+  original_event_id: string;
+  seller: string;
+  resale_price: string;
+};
+
+type TicketResaleCancelled = {
+  listing_id: string;
+  ticket_id: string;
+  seller: string;
+};
+
+type TicketResold = {
+  listing_id: string;
+  ticket_id: string;
+  original_event_id: string;
+  seller: string;
+  buyer: string;
+  resale_price: string;
+};
+
 /**
  * Handles all events emitted by the `dtickets` module.
  * Data is modelled in a way that allows writing to the db in any order (DESC or ASC) without
@@ -39,6 +62,7 @@ export const handleDTicketsEvents = async (
 ) => {
   const eventUpdates: Record<string, any> = {};
   const ticketUpdates: Record<string, any> = {};
+  const resaleListingUpdates: Record<string, any> = {};
 
   for (const event of events) {
     if (!event.type.startsWith(type))
@@ -100,6 +124,65 @@ export const handleDTicketsEvents = async (
 
       continue;
     }
+
+    // Handle TicketListedForResale
+    if (event.type.endsWith("::TicketListedForResale")) {
+      const data = event.parsedJson as TicketListedForResale;
+
+      resaleListingUpdates[data.listing_id] = {
+        id: data.listing_id,
+        ticketId: data.ticket_id,
+        eventId: data.original_event_id,
+        seller: data.seller,
+        resalePrice: data.resale_price,
+        isActive: true,
+      };
+
+      continue;
+    }
+
+    // Handle TicketResaleCancelled
+    if (event.type.endsWith("::TicketResaleCancelled")) {
+      const data = event.parsedJson as TicketResaleCancelled;
+
+      if (!Object.hasOwn(resaleListingUpdates, data.listing_id)) {
+        resaleListingUpdates[data.listing_id] = {
+          id: data.listing_id,
+          isActive: false,
+        };
+      } else {
+        resaleListingUpdates[data.listing_id].isActive = false;
+      }
+
+      continue;
+    }
+
+    // Handle TicketResold
+    if (event.type.endsWith("::TicketResold")) {
+      const data = event.parsedJson as TicketResold;
+
+      // Mark the listing as inactive
+      if (!Object.hasOwn(resaleListingUpdates, data.listing_id)) {
+        resaleListingUpdates[data.listing_id] = {
+          id: data.listing_id,
+          isActive: false,
+        };
+      } else {
+        resaleListingUpdates[data.listing_id].isActive = false;
+      }
+
+      // Update ticket owner
+      if (!Object.hasOwn(ticketUpdates, data.ticket_id)) {
+        ticketUpdates[data.ticket_id] = {
+          id: data.ticket_id,
+          owner: data.buyer,
+        };
+      } else {
+        ticketUpdates[data.ticket_id].owner = data.buyer;
+      }
+
+      continue;
+    }
   }
 
   // Process event updates
@@ -156,5 +239,26 @@ export const handleDTicketsEvents = async (
         data: { ticketsSold: ticketCount },
       });
     }
+  }
+
+  // Process resale listing updates
+  if (Object.keys(resaleListingUpdates).length > 0) {
+    const resalePromises = Object.values(resaleListingUpdates).map((update) =>
+      prisma.resaleListing.upsert({
+        where: {
+          id: update.id,
+        },
+        create: update,
+        update: {
+          isActive: update.isActive,
+          ...(update.ticketId && { ticketId: update.ticketId }),
+          ...(update.eventId && { eventId: update.eventId }),
+          ...(update.seller && { seller: update.seller }),
+          ...(update.resalePrice && { resalePrice: update.resalePrice }),
+        },
+      })
+    );
+
+    await Promise.all(resalePromises);
   }
 };
