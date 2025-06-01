@@ -286,7 +286,7 @@ export default function ResaleMarketList({
           {filteredAndSortedListings.map((listing) => (
             <Card
               key={listing.listingId}
-              className="bg-ocean text-cloud border-sea flex flex-col h-full overflow-hidden hover:shadow-2xl hover:shadow-sea/30 hover:border-aqua hover:border-2 transition-all duration-300 cursor-pointer group hover:bg-ocean/80"
+              className="bg-ocean text-cloud border-sea flex flex-col h-full overflow-hidden hover:shadow-2xl hover:shadow-sea/30 hover:border-aqua transition-all duration-300 cursor-pointer group hover:bg-ocean/80"
             >
               {listing.imageUrl ? (
                 <div className="relative w-full h-40 overflow-hidden">

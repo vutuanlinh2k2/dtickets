@@ -20,6 +20,7 @@ import { formatDateString } from "@/lib/utils";
 import type { Ticket } from "../types";
 import ResellTicketModal from "./ResellTicketModal";
 import { useCreateEventMutation } from "../mutations/resellTicket";
+import { formatSuiAmount } from "@/lib/formatSuiAmount";
 
 export default function MyTicketsList() {
   const { isConnecting } = useCurrentWallet();
@@ -42,8 +43,6 @@ export default function MyTicketsList() {
     enabled: !!walletAddress,
   });
 
-  console.log(data);
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tickets: Ticket[] = (data ?? []).map((ticket: any) => ({
     id: ticket.id,
@@ -56,6 +55,7 @@ export default function MyTicketsList() {
     purchaseTime: ticket.createdAt,
     imageUrl: ticket.event.imageUrl,
     isListedForSale: ticket.isListedForSale,
+    purchaseAmount: ticket.event.ticketPrice,
   }));
 
   const handleResellClick = (ticket: Ticket) => {
@@ -251,8 +251,18 @@ export default function MyTicketsList() {
                 </div>
               </div>
               <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <span className="text-aqua text-sm group-hover:text-cloud transition-colors duration-300">
+                    Price:
+                  </span>
+                  <span className="text-cloud font-mono text-sm group-hover:text-sea transition-colors duration-300">
+                    {formatSuiAmount(ticket.purchaseAmount)} SUI
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-1">
                 <p className="text-aqua text-sm group-hover:text-cloud transition-colors duration-300">
-                  Purchased:
+                  Purchased At:
                 </p>
                 <p className="text-cloud text-sm group-hover:text-sea transition-colors duration-300">
                   {formatDateString(ticket.purchaseTime)}

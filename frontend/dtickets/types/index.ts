@@ -41,6 +41,7 @@ export type Ticket = {
   venue: string;
   ticketNumber: string;
   purchaseTime: string;
+  purchaseAmount: string;
   imageUrl?: string; // Add optional image URL
   isListedForSale: boolean;
 };
