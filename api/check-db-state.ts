@@ -51,6 +51,28 @@ async function checkDatabaseState() {
       console.log("   No tickets found in database");
     }
 
+    // Check resale listings in database
+    const resaleListings = await prisma.resaleListing.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    console.log(`\n💰 Resale Listings in database: ${resaleListings.length}`);
+    if (resaleListings.length > 0) {
+      resaleListings.forEach((listing, index) => {
+        console.log(`\n   ${index + 1}. Listing ID: ${listing.id}`);
+        console.log(`      Ticket ID: ${listing.ticketId}`);
+        console.log(`      Event ID: ${listing.eventId}`);
+        console.log(`      Seller: ${listing.seller}`);
+        console.log(`      Resale Price: ${listing.resalePrice} MIST`);
+        console.log(`      Active: ${listing.isActive}`);
+        console.log(`      Created: ${listing.createdAt}`);
+      });
+    } else {
+      console.log("   No resale listings found in database");
+    }
+
     // Check indexer cursor state
     const cursors = await prisma.cursor.findMany();
     console.log(`\n📊 Indexer Cursors: ${cursors.length}`);

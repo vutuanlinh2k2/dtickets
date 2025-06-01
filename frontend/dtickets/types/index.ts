@@ -31,3 +31,16 @@ export type Event = {
   updatedAt: string;
   venue: string;
 };
+
+export type Ticket = {
+  id: string;
+  eventId: string;
+  eventName: string;
+  eventStartTime: string;
+  eventEndTime: string;
+  venue: string;
+  ticketNumber: string;
+  purchaseTime: string;
+  imageUrl?: string; // Add optional image URL
+  isListedForSale: boolean;
+};

@@ -8,7 +8,11 @@ async function cleanDatabase() {
 
   try {
     // Delete in order due to foreign key constraints
-    // First delete tickets (child table)
+    // First delete resale listings (independent table)
+    const deletedResaleListings = await prisma.resaleListing.deleteMany({});
+    console.log(`✅ Deleted ${deletedResaleListings.count} resale listings`);
+
+    // Then delete tickets (child table)
     const deletedTickets = await prisma.ticket.deleteMany({});
     console.log(`✅ Deleted ${deletedTickets.count} tickets`);
 

@@ -138,14 +138,16 @@ export const handleDTicketsEvents = async (
         isActive: true,
       };
 
-      // Update ticket to mark as listed for sale
+      // Update ticket to mark as listed for sale (only update, don't create)
       if (!Object.hasOwn(ticketUpdates, data.ticket_id)) {
         ticketUpdates[data.ticket_id] = {
           id: data.ticket_id,
           isListedForSale: true,
+          updateOnly: true, // Flag to indicate this should only update
         };
       } else {
         ticketUpdates[data.ticket_id].isListedForSale = true;
+        ticketUpdates[data.ticket_id].updateOnly = true;
       }
 
       continue;
@@ -164,14 +166,16 @@ export const handleDTicketsEvents = async (
         resaleListingUpdates[data.listing_id].isActive = false;
       }
 
-      // Update ticket to mark as no longer listed for sale
+      // Update ticket to mark as no longer listed for sale (only update, don't create)
       if (!Object.hasOwn(ticketUpdates, data.ticket_id)) {
         ticketUpdates[data.ticket_id] = {
           id: data.ticket_id,
           isListedForSale: false,
+          updateOnly: true, // Flag to indicate this should only update
         };
       } else {
         ticketUpdates[data.ticket_id].isListedForSale = false;
+        ticketUpdates[data.ticket_id].updateOnly = true;
       }
 
       continue;
@@ -191,16 +195,18 @@ export const handleDTicketsEvents = async (
         resaleListingUpdates[data.listing_id].isActive = false;
       }
 
-      // Update ticket owner and mark as no longer listed for sale
+      // Update ticket owner and mark as no longer listed for sale (only update, don't create)
       if (!Object.hasOwn(ticketUpdates, data.ticket_id)) {
         ticketUpdates[data.ticket_id] = {
           id: data.ticket_id,
           owner: data.buyer,
           isListedForSale: false,
+          updateOnly: true, // Flag to indicate this should only update
         };
       } else {
         ticketUpdates[data.ticket_id].owner = data.buyer;
         ticketUpdates[data.ticket_id].isListedForSale = false;
+        ticketUpdates[data.ticket_id].updateOnly = true;
       }
 
       continue;
@@ -232,26 +238,47 @@ export const handleDTicketsEvents = async (
 
   // Process ticket updates and update event ticket counts
   if (Object.keys(ticketUpdates).length > 0) {
-    const ticketPromises = Object.values(ticketUpdates).map((update) =>
-      prisma.ticket.upsert({
-        where: {
-          id: update.id,
-        },
-        create: update,
-        update: {
-          ...(update.owner && { owner: update.owner }),
-          ...(update.isListedForSale !== undefined && {
-            isListedForSale: update.isListedForSale,
-          }),
-        },
-      })
-    );
+    const ticketPromises = Object.values(ticketUpdates).map((update) => {
+      // If this is an update-only operation (for resale events), use update instead of upsert
+      if (update.updateOnly) {
+        const { updateOnly, ...updateData } = update;
+        return prisma.ticket.update({
+          where: {
+            id: update.id,
+          },
+          data: {
+            ...(updateData.owner && { owner: updateData.owner }),
+            ...(updateData.isListedForSale !== undefined && {
+              isListedForSale: updateData.isListedForSale,
+            }),
+          },
+        });
+      } else {
+        // For new tickets (from purchase events), use upsert
+        return prisma.ticket.upsert({
+          where: {
+            id: update.id,
+          },
+          create: update,
+          update: {
+            ...(update.owner && { owner: update.owner }),
+            ...(update.isListedForSale !== undefined && {
+              isListedForSale: update.isListedForSale,
+            }),
+          },
+        });
+      }
+    });
 
     await Promise.all(ticketPromises);
 
     // Update tickets sold count for affected events
     const affectedEventIds = [
-      ...new Set(Object.values(ticketUpdates).map((t) => t.eventId)),
+      ...new Set(
+        Object.values(ticketUpdates)
+          .map((t) => t.eventId)
+          .filter((eventId): eventId is string => typeof eventId === "string")
+      ),
     ];
 
     for (const eventId of affectedEventIds) {

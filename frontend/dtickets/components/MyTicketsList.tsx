@@ -1,36 +1,35 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   TicketIcon,
   AlertTriangle,
   CalendarDays,
   MapPin,
   Loader2,
+  Coins,
 } from "lucide-react";
 import Image from "next/image";
 import { useCurrentAccount, useCurrentWallet } from "@mysten/dapp-kit";
 import { useQuery } from "@tanstack/react-query";
 import { QueryKey } from "../constants";
 import { formatDateString } from "@/lib/utils";
-
-interface Ticket {
-  id: string;
-  eventId: string;
-  eventName: string;
-  eventStartTime: string;
-  eventEndTime: string;
-  venue: string;
-  ticketNumber: string;
-  purchaseTime: string;
-  imageUrl?: string; // Add optional image URL
-}
+import type { Ticket } from "../types";
+import ResellTicketModal from "./ResellTicketModal";
+import { useCreateEventMutation } from "../mutations/resellTicket";
 
 export default function MyTicketsList() {
   const { isConnecting } = useCurrentWallet();
   const account = useCurrentAccount();
   const walletAddress = account?.address;
+  const [isResellModalOpen, setIsResellModalOpen] = useState(false);
+  const [selectedTicketToResell, setSelectedTicketToResell] =
+    useState<Ticket | null>(null);
+
+  const resellMutation = useCreateEventMutation();
 
   const { data, isLoading } = useQuery({
     queryKey: [QueryKey.MyTickets],
@@ -43,6 +42,8 @@ export default function MyTicketsList() {
     enabled: !!walletAddress,
   });
 
+  console.log(data);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tickets: Ticket[] = (data ?? []).map((ticket: any) => ({
     id: ticket.id,
@@ -54,7 +55,35 @@ export default function MyTicketsList() {
     ticketNumber: ticket.ticketNumber,
     purchaseTime: ticket.createdAt,
     imageUrl: ticket.event.imageUrl,
+    isListedForSale: ticket.isListedForSale,
   }));
+
+  const handleResellClick = (ticket: Ticket) => {
+    setSelectedTicketToResell(ticket);
+    setIsResellModalOpen(true);
+  };
+
+  const handleCloseResellModal = () => {
+    setIsResellModalOpen(false);
+    setSelectedTicketToResell(null);
+  };
+
+  const handleConfirmResell = async (
+    resalePrice: number
+  ): Promise<"success" | "failed" | "invalid_price"> => {
+    if (!selectedTicketToResell) return "failed";
+
+    try {
+      await resellMutation.mutateAsync({
+        ticketData: selectedTicketToResell,
+        resalePrice: resalePrice,
+      });
+      return "success";
+    } catch (error) {
+      console.error("Failed to resell ticket:", error);
+      return "failed";
+    }
+  };
 
   if (!isConnecting && !walletAddress) {
     return (
@@ -97,7 +126,7 @@ export default function MyTicketsList() {
         {tickets.map((ticket) => (
           <Card
             key={ticket.id}
-            className="bg-ocean text-cloud border-sea overflow-hidden hover:shadow-2xl hover:shadow-sea/30 hover:border-aqua  transition-all duration-300 cursor-pointer group hover:bg-ocean/80"
+            className="bg-ocean text-cloud border-sea overflow-hidden hover:shadow-2xl hover:shadow-sea/30 hover:border-aqua transition-all duration-300 cursor-pointer group hover:bg-ocean/80"
           >
             {/* Event Image or Background */}
             {ticket.imageUrl ? (
@@ -134,28 +163,71 @@ export default function MyTicketsList() {
                   <TicketIcon className="mr-2 h-5 w-5" />
                   {ticket.eventName}
                 </CardTitle>
-                <Badge
-                  variant={
-                    getEventStatus(ticket.eventStartTime, ticket.eventEndTime) === "upcoming"
-                      ? "default"
-                      : getEventStatus(ticket.eventStartTime, ticket.eventEndTime) === "ongoing"
-                        ? "secondary"
-                        : "destructive"
-                  }
-                  className={
-                    getEventStatus(ticket.eventStartTime, ticket.eventEndTime) === "upcoming"
-                      ? "bg-green-600 text-white"
-                      : getEventStatus(ticket.eventStartTime, ticket.eventEndTime) === "ongoing"
-                        ? "bg-yellow-600 text-white"
-                        : "bg-gray-600 text-white"
-                  }
-                >
-                  {getEventStatus(ticket.eventStartTime, ticket.eventEndTime) === "upcoming"
-                    ? "Upcoming"
-                    : getEventStatus(ticket.eventStartTime, ticket.eventEndTime) === "ongoing"
-                      ? "Ongoing"
-                      : "Past"}
-                </Badge>
+                <div className="flex flex-col items-end">
+                  <Badge
+                    variant={
+                      getEventStatus(
+                        ticket.eventStartTime,
+                        ticket.eventEndTime
+                      ) === "upcoming"
+                        ? "default"
+                        : getEventStatus(
+                              ticket.eventStartTime,
+                              ticket.eventEndTime
+                            ) === "ongoing"
+                          ? "secondary"
+                          : "destructive"
+                    }
+                    className={
+                      getEventStatus(
+                        ticket.eventStartTime,
+                        ticket.eventEndTime
+                      ) === "upcoming"
+                        ? "bg-green-600 text-white"
+                        : getEventStatus(
+                              ticket.eventStartTime,
+                              ticket.eventEndTime
+                            ) === "ongoing"
+                          ? "bg-yellow-600 text-white"
+                          : "bg-gray-600 text-white"
+                    }
+                  >
+                    {getEventStatus(
+                      ticket.eventStartTime,
+                      ticket.eventEndTime
+                    ) === "upcoming"
+                      ? "Upcoming"
+                      : getEventStatus(
+                            ticket.eventStartTime,
+                            ticket.eventEndTime
+                          ) === "ongoing"
+                        ? "Ongoing"
+                        : "Past"}
+                  </Badge>
+                  {getEventStatus(
+                    ticket.eventStartTime,
+                    ticket.eventEndTime
+                  ) === "upcoming" &&
+                    !ticket.isListedForSale && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-2 border-sea text-aqua hover:bg-sea hover:text-deep-ocean"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleResellClick(ticket);
+                        }}
+                      >
+                        Resell Ticket
+                      </Button>
+                    )}
+                  {ticket.isListedForSale && (
+                    <Badge className="mt-2 bg-blue-600 text-white hover:bg-blue-600">
+                      Listed for Sale{" "}
+                      <Coins className="inline-block h-4 w-4 ml-1" />
+                    </Badge>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -188,6 +260,15 @@ export default function MyTicketsList() {
           </Card>
         ))}
       </div>
+
+      {selectedTicketToResell && (
+        <ResellTicketModal
+          isOpen={isResellModalOpen}
+          onClose={handleCloseResellModal}
+          ticket={selectedTicketToResell}
+          onConfirmResell={handleConfirmResell}
+        />
+      )}
     </div>
   );
 }
