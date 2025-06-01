@@ -15,6 +15,9 @@ const EInvalidTicketPrice: u64 = 3;
 const EInvalidEventDate: u64 = 4;
 const EInvalidSupply: u64 = 5;
 const EInvalidTimeRange: u64 = 6;
+const EInvalidResalePrice: u64 = 7;
+const EInsufficientResalePayment: u64 = 8;
+const ENotListingSeller: u64 = 9;
 
 // === Structs ===
 
@@ -40,6 +43,14 @@ public struct Ticket has key, store {
     ticket_number: u64,
 }
 
+/// Represents a ticket listed for resale
+public struct ResaleListing has key {
+    id: UID,
+    ticket: Ticket, // The actual ticket object
+    seller: address,
+    resale_price: u64, // Price in MIST
+}
+
 // === Events ===
 
 public struct EventCreated has copy, drop {
@@ -61,6 +72,29 @@ public struct TicketPurchased has copy, drop {
     recipient: address,
     price: u64,
     ticket_number: u64,
+}
+
+public struct TicketListedForResale has copy, drop {
+    listing_id: ID,
+    ticket_id: ID, // ID of the ticket object inside ResaleListing.ticket.id
+    original_event_id: ID, // ID of the event the ticket is for
+    seller: address,
+    resale_price: u64,
+}
+
+public struct TicketResaleCancelled has copy, drop {
+    listing_id: ID,
+    ticket_id: ID,
+    seller: address,
+}
+
+public struct TicketResold has copy, drop {
+    listing_id: ID,
+    ticket_id: ID,
+    original_event_id: ID,
+    seller: address,
+    buyer: address,
+    resale_price: u64,
 }
 
 // === Public Functions ===
@@ -163,6 +197,81 @@ public fun purchase_ticket(
     transfer::transfer(ticket, recipient);
 }
 
+/// List a ticket for resale
+public fun list_ticket_for_resale(ticket: Ticket, resale_price: u64, ctx: &mut TxContext) {
+    assert!(resale_price > 0, EInvalidResalePrice);
+
+    let seller = tx_context::sender(ctx);
+    let listing_id_obj = object::new(ctx);
+    let listing_id = object::uid_to_inner(&listing_id_obj);
+    let ticket_id = object::uid_to_inner(&ticket.id);
+    let original_event_id = ticket.event_id;
+
+    let listing = ResaleListing {
+        id: listing_id_obj,
+        ticket,
+        seller,
+        resale_price,
+    };
+
+    event::emit(TicketListedForResale {
+        listing_id,
+        ticket_id,
+        original_event_id,
+        seller,
+        resale_price,
+    });
+
+    transfer::share_object(listing);
+}
+
+/// Cancel a resale listing
+public fun cancel_resale_listing(listing: ResaleListing, ctx: &mut TxContext) {
+    assert!(tx_context::sender(ctx) == listing.seller, ENotListingSeller);
+
+    let ResaleListing { id, ticket, seller, resale_price: _ } = listing;
+    let listing_id = object::uid_to_inner(&id);
+    let ticket_id = object::uid_to_inner(&ticket.id);
+
+    event::emit(TicketResaleCancelled {
+        listing_id,
+        ticket_id,
+        seller,
+    });
+
+    transfer::transfer(ticket, seller); // Return ticket to seller
+    object::delete(id); // Delete the listing object
+}
+
+/// Purchase a resold ticket
+public fun purchase_resold_ticket(
+    listing: ResaleListing,
+    payment: Coin<SUI>,
+    recipient: address,
+    ctx: &mut TxContext,
+) {
+    let payment_amount = coin::value(&payment);
+    assert!(payment_amount >= listing.resale_price, EInsufficientResalePayment);
+
+    let ResaleListing { id, ticket, seller, resale_price } = listing;
+    let listing_id = object::uid_to_inner(&id);
+    let ticket_id = object::uid_to_inner(&ticket.id);
+    let original_event_id = ticket.event_id;
+
+    event::emit(TicketResold {
+        listing_id,
+        ticket_id,
+        original_event_id,
+        seller,
+        buyer: tx_context::sender(ctx),
+        resale_price,
+    });
+
+    transfer::public_transfer(payment, seller); // Send payment to the original ticket lister
+    transfer::transfer(ticket, recipient); // Send ticket to the new buyer
+    object::delete(id); // Delete the listing object
+}
+
 // === View Functions ===
 
 /// Get event details
@@ -218,10 +327,14 @@ public fun get_event_tickets_sold(event: &Event): u64 {
     event.tickets_sold
 }
 
-
 /// Get ticket details
 public fun get_ticket_info(ticket: &Ticket): (ID, u64) {
     (ticket.event_id, ticket.ticket_number)
+}
+
+/// Get the ticket's own ID
+public fun get_ticket_id(ticket: &Ticket): ID {
+    object::uid_to_inner(&ticket.id)
 }
 
 public fun get_ticket_event_id(ticket: &Ticket): ID {
@@ -244,6 +357,38 @@ public fun get_available_tickets(event: &Event): u64 {
     } else {
         event.total_tickets - event.tickets_sold
     }
+}
+
+// === View functions for ResaleListing ===
+
+/// Get all details of a resale listing
+public fun get_resale_listing_info(listing: &ResaleListing): (ID, ID, address, u64) {
+    (
+        object::uid_to_inner(&listing.ticket.id),
+        listing.ticket.event_id,
+        listing.seller,
+        listing.resale_price,
+    )
+}
+
+/// Get the ticket ID from a resale listing
+public fun get_resale_listing_ticket_id(listing: &ResaleListing): ID {
+    object::uid_to_inner(&listing.ticket.id)
+}
+
+/// Get the original event ID from a resale listing
+public fun get_resale_listing_original_event_id(listing: &ResaleListing): ID {
+    listing.ticket.event_id
+}
+
+/// Get the seller's address from a resale listing
+public fun get_resale_listing_seller(listing: &ResaleListing): address {
+    listing.seller
+}
+
+/// Get the resale price from a resale listing
+public fun get_resale_listing_price(listing: &ResaleListing): u64 {
+    listing.resale_price
 }
 
 // === Test Functions ===

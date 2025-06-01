@@ -1,7 +1,7 @@
 #[test_only]
 module dtickets::dtickets_tests;
 
-use dtickets::dtickets::{Self, Event, Ticket};
+use dtickets::dtickets::{Self, Event, Ticket, ResaleListing};
 use std::string;
 use sui::clock;
 use sui::coin;
@@ -610,4 +610,124 @@ fun setup_event(scenario: &mut Scenario) {
     );
 
     clock::destroy_for_testing(clock);
+}
+
+#[test]
+fun test_ticket_resale_flow() {
+    let alice = @0xA; // Initial ticket buyer, then seller
+    let bob = @0xB; // Purchaser of the resold ticket
+    let eve = @0xE; // Another user for cancellation test
+
+    let mut scenario = test_scenario::begin(ADMIN);
+
+    // 1. Admin creates an event
+    setup_event(&mut scenario);
+
+    // 2. Alice purchases a ticket
+    test_scenario::next_tx(&mut scenario, alice);
+    let ticket_to_resell_id: ID;
+    let resale_price = 1_200_000_000; // 1.2 SUI (higher than original)
+    {
+        let mut event = test_scenario::take_shared<Event>(&scenario);
+        let payment = coin::mint_for_testing<SUI>(TICKET_PRICE, test_scenario::ctx(&mut scenario));
+        // Alice buys for herself initially
+        dtickets::purchase_ticket(&mut event, payment, alice, test_scenario::ctx(&mut scenario));
+        assert!(dtickets::get_event_tickets_sold(&event) == 1, 0);
+
+        test_scenario::return_shared(event);
+    };
+
+    // Alice retrieves her ticket (Ticket object)
+    test_scenario::next_tx(&mut scenario, alice);
+    {
+        assert!(test_scenario::has_most_recent_for_sender<Ticket>(&scenario), 1);
+        let alice_ticket_object = test_scenario::take_from_sender<Ticket>(&scenario);
+        ticket_to_resell_id = dtickets::get_ticket_id(&alice_ticket_object);
+
+        // 3. Alice lists the ticket for resale in the same transaction
+        dtickets::list_ticket_for_resale(
+            alice_ticket_object,
+            resale_price,
+            test_scenario::ctx(&mut scenario),
+        );
+    };
+
+    // 4. Verify ResaleListing details
+    test_scenario::next_tx(&mut scenario, bob); // Use any address to view shared object
+    {
+        let listing = test_scenario::take_shared<ResaleListing>(&scenario);
+        assert!(dtickets::get_resale_listing_seller(&listing) == alice, 1);
+        assert!(dtickets::get_resale_listing_price(&listing) == resale_price, 2);
+        assert!(dtickets::get_resale_listing_ticket_id(&listing) == ticket_to_resell_id, 3);
+        // Put it back for Bob to purchase
+        test_scenario::return_shared(listing);
+    };
+
+    // 5. Bob purchases the resold ticket
+    test_scenario::next_tx(&mut scenario, bob);
+    {
+        let listing = test_scenario::take_shared<ResaleListing>(&scenario);
+        let payment = coin::mint_for_testing<SUI>(resale_price, test_scenario::ctx(&mut scenario));
+        // Bob buys for himself
+        dtickets::purchase_resold_ticket(listing, payment, bob, test_scenario::ctx(&mut scenario));
+        // Listing object is deleted by purchase_resold_ticket
+    };
+
+    // 6. Verify Bob owns the ticket
+    // Bob needs to take the ticket he received.
+    test_scenario::next_tx(&mut scenario, bob);
+    {
+        let bobs_ticket = test_scenario::take_from_sender<Ticket>(&scenario);
+        assert!(dtickets::get_ticket_id(&bobs_ticket) == ticket_to_resell_id, 4);
+        test_scenario::return_to_sender(&scenario, bobs_ticket);
+    };
+
+    // --- Test Resale Cancellation ---
+    // Eve purchases a ticket first to list it
+    test_scenario::next_tx(&mut scenario, eve);
+    {
+        let mut event = test_scenario::take_shared<Event>(&scenario);
+        let payment = coin::mint_for_testing<SUI>(TICKET_PRICE, test_scenario::ctx(&mut scenario));
+        dtickets::purchase_ticket(&mut event, payment, eve, test_scenario::ctx(&mut scenario));
+        assert!(dtickets::get_event_tickets_sold(&event) == 2, 5); // Alice's original, now Eve's
+        test_scenario::return_shared(event);
+    };
+
+    // Eve lists her ticket for resale
+    let eve_resale_price = 900_000_000; // 0.9 SUI
+    test_scenario::next_tx(&mut scenario, eve);
+    let eves_ticket_object_id = {
+        let eves_ticket_to_list = test_scenario::take_from_sender<Ticket>(&scenario);
+        let eves_ticket_object_id = dtickets::get_ticket_id(&eves_ticket_to_list);
+        dtickets::list_ticket_for_resale(
+            eves_ticket_to_list,
+            eve_resale_price,
+            test_scenario::ctx(&mut scenario),
+        );
+
+        eves_ticket_object_id
+    };
+
+    // Eve cancels the resale listing
+    test_scenario::next_tx(&mut scenario, eve);
+    {
+        let listing_to_cancel = test_scenario::take_shared<ResaleListing>(&scenario); // Eve takes back her listing obj
+        assert!(dtickets::get_resale_listing_seller(&listing_to_cancel) == eve, 6);
+        assert!(
+            dtickets::get_resale_listing_ticket_id(&listing_to_cancel) == eves_ticket_object_id,
+            7,
+        );
+        dtickets::cancel_resale_listing(listing_to_cancel, test_scenario::ctx(&mut scenario));
+        // Listing object is deleted by cancel_resale_listing
+    };
+
+    // Verify Eve has her ticket back
+    test_scenario::next_tx(&mut scenario, eve);
+    {
+        let eves_retrieved_ticket = test_scenario::take_from_sender<Ticket>(&scenario);
+        assert!(dtickets::get_ticket_id(&eves_retrieved_ticket) == eves_ticket_object_id, 8);
+        test_scenario::return_to_sender(&scenario, eves_retrieved_ticket);
+    };
+
+    test_scenario::end(scenario);
 }
