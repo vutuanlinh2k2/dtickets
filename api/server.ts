@@ -3,10 +3,18 @@
 
 import express from "express";
 import { prisma } from "./db";
+import cors from "cors";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json());
 
 // Health check endpoint

@@ -237,7 +237,7 @@ export default function EventList({}: EventListProps) {
                 value="0-10"
                 className="hover:bg-sea hover:text-deep-ocean"
               >
-                1-10 SUI
+                0-10 SUI
               </SelectItem>
               <SelectItem
                 value="10-50"
